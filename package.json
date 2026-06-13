@@ -1,0 +1,23 @@
+{
+  "name": "learning",
+  "version": "1.0.0",
+  "description": "This is a package created for using typescript in nodejs for better node development learning.",
+  "author": {
+    "name": "Prabhat",
+    "email": "highkumar0@gmail.com",
+    "url": "https://github.com/Prab2126"
+  },
+  "type": "module",
+  "main": "practice.ts",
+  "scripts": {
+    "ts": "tsc",
+    "start": "tsc --init"
+  },
+  "keywords": [
+    "node",
+    "nodejs",
+    "js",
+    "backend",
+    "v8"
+  ]
+}
