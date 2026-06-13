@@ -8,7 +8,7 @@
     "url": "https://github.com/Prab2126"
   },
   "type": "module",
-  "main": "practice.ts",
+  "main": "src/practice.mts",
   "scripts": {
     "dev": "tsc",
     "start": "tsc --init"
