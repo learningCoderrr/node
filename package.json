@@ -10,7 +10,7 @@
   "type": "module",
   "main": "practice.ts",
   "scripts": {
-    "ts": "tsc",
+    "dev": "tsc",
     "start": "tsc --init"
   },
   "keywords": [
@@ -19,5 +19,9 @@
     "js",
     "backend",
     "v8"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "typescript": "^6.0.3"
+  }
 }
