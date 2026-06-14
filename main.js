@@ -215,3 +215,39 @@
 // fs module
 // to watch the file is changed or renamed we use watch function this is simple on normal fs . Hard in promise fs
 // fs.watch("pathOfFile",(typeOfUpdate,filePath)=>{});when ever any changes occurs then callback function will run.
+// Data Representation Systems
+
+// There are two systems used to represent storage sizes:
+
+// 1. SI (International System of Units)
+//    - Used by hardware manufacturers (SSD, HDD, pen drive, mobile companies).
+//    - Uses powers of 10 (10^3 = 1000).
+//    - Example:
+//      1 KB = 1000 Bytes
+//      1 MB = 1000 KB
+//      1 GB = 1000 MB
+//      1 TB = 1000 GB
+
+// 2. IEC (International Electrotechnical Commission)
+//    - Used by operating systems and software to display storage sizes.
+//    - Uses powers of 2 (2^10 = 1024).
+//    - Example:
+//      1 KiB = 1024 Bytes
+//      1 MiB = 1024 KiB
+//      1 GiB = 1024 MiB
+//      1 TiB = 1024 GiB
+
+// Real-life example:
+// A pen drive sold as "32 GB" (manufacturer's SI value)
+// actually contains 32 × 1000^3 = 32,000,000,000 bytes.
+
+// When your operating system calculates the same bytes using IEC,
+// it shows:
+// 32,000,000,000 ÷ 1024^3 ≈ 29.8 GiB.
+
+// This is why a 32 GB pen drive appears as about 29.8 GiB in Windows/Linux/macOS.
+// No storage is missing; only the measurement system is different.
+
+// Difference example:
+// 32 GB  = 32 × 1000^3  = 32,000,000,000 Bytes
+// 32 GiB = 32 × 1024^3  = 34,359,738,368 Bytes
