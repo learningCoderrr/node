@@ -3,7 +3,7 @@ import type ITask from "./type.d.ts";
 import { freemem, totalmem } from "node:os";
 function byteToGbConverter(size: number): number {
   const byteToGb: number = Number.parseFloat(
-    (size / 1024 / 1024 / 1024).toFixed(2),
+    (size / 1024 / 1024 / 1024).toFixed(1),
   );
   return byteToGb;
 }
@@ -12,7 +12,7 @@ function getMemoryInfo(): IMemory {
   const memoryRemaining: number = byteToGbConverter(freemem());
   const memorySize: number = byteToGbConverter(totalmem());
   const memoryUsed: number = parseFloat(
-    (memorySize - memoryRemaining).toFixed(),
+    (memorySize - memoryRemaining).toFixed(1),
   );
   return { memoryRemaining, memorySize, memoryUsed };
 }
@@ -25,6 +25,7 @@ function taskManager(timeInSec: number): void {
     const { memoryRemaining, memoryUsed }: IMemory = getMemoryInfo();
 
     if (memoryRemaining != task.memory.memoryRemaining) {
+      console.clear();
       console.log(
         `memoryRemaining=> ${memoryRemaining}GB \n memoryUsed=> ${memoryUsed}GB`,
       );
