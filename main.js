@@ -211,6 +211,8 @@
 // read  directory file/directory
 // by the help of readdir function we can read file and folder of the directory
 // readdir("path");//array of files and directory
+// stat this help to find the path is folder or file in the directory
+// stat("path")(methods isDirectory or isFile)
 
 // fs module
 // to watch the file is changed or renamed we use watch function this is simple on normal fs . Hard in promise fs
