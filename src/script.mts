@@ -43,7 +43,6 @@ if (usrInputPath != null) {
           } else {
             const num: RegExpMatchArray | null = value.match(/\d+/);
             if (num !== null) lastNum = Number(num);
-            console.log(lastNum);
           }
         }
       }
