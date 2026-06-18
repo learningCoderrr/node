@@ -253,3 +253,17 @@
 // Difference example:
 // 32 GB  = 32 × 1000^3  = 32,000,000,000 Bytes
 // 32 GiB = 32 × 1024^3  = 34,359,738,368 Bytes
+
+// In JS we show HEXDEC,BINARY,OCTAL systems in different way.
+// HEXDEC=> 0xfa
+// BINARY=> 0b101
+// OCTAL=> 0o712
+// this will automatically  converted into decimal system
+
+// There is way to view the hex and binary of a character means there unicode U+ in the form of hex and binary ,using xxd (hex dump) exe file used in bash terminal .
+// there is xxd named executor which takes files path and convert the text into hex formate
+// example:- xxd src/test.js
+// now this provide a pair of hex digit if wanted single single then use this -g flag with n number for splitting or adding .
+// xxd -g 1 src/test.js
+// for viewing the binary numbers not the hex we use `-b` flag for that
+// xxd -b src/test.js
