@@ -16,7 +16,6 @@ function additionalZeroOnBinary(
 ): string {
   const pairedBinary: string = "0".repeat(extraZero) + binary;
   const pattern: RegExp = new RegExp(`\\d{0,${redis}}`, "g");
-  console.log(binary);
   return pairedBinary.match(pattern)?.slice(0, -1).join(" ") ?? "";
 }
 
@@ -62,12 +61,14 @@ function programmerCalculator(num: number, action: string): void {
   octal=>${octal}
   decimal=>${decimal}
   `;
-
   console.log(final);
 }
 
 const digit: string = process.argv[2] ?? "";
 const typeOfAction: string = digit.slice(0, 2);
+const digitExtract: string = digit.slice(2);
 const digitTypeValue: number =
   digitType[typeOfAction as keyof IDigitTypes] ?? 10;
-programmerCalculator(parseInt(digit, digitTypeValue), typeOfAction);
+if (digitExtract.includes(String(digitTypeValue)) === false) {
+  programmerCalculator(parseInt(digitExtract, digitTypeValue), typeOfAction);
+} else console.log("InValid number system", digit);
