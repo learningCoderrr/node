@@ -71,4 +71,4 @@ const digitTypeValue: number =
   digitType[typeOfAction as keyof IDigitTypes] ?? 10;
 if (digitExtract.includes(String(digitTypeValue)) === false) {
   programmerCalculator(parseInt(digitExtract, digitTypeValue), typeOfAction);
-} else console.log("InValid number system", digit);
+} else console.log("InValid number system or InValid Value", digit);
