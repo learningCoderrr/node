@@ -36,8 +36,8 @@ function replica(binary: string, redis: 3 | 4): string {
   return additionalZeroOnBinary(binary, redis, extraZeroCount);
 }
 
-function programmerCalculator(num: number, action: string): void {
-  let binary: string | null = num.toString(2);
+function programmerCalculator(decimal: number, action: string): void {
+  let binary: string | null = decimal.toString(2);
 
   switch (action) {
     case "0x": {
@@ -49,12 +49,11 @@ function programmerCalculator(num: number, action: string): void {
       break;
     }
     default: {
-      binary = num.toString(2);
+      binary = decimal.toString(2);
     }
   }
-  const hexDecimal: string = num.toString(16);
-  const octal: string = num.toString(8);
-  const decimal: string = num.toString(10);
+  const hexDecimal: string = decimal.toString(16);
+  const octal: string = decimal.toString(8);
   const final: string = `
   binary=>${binary}
   hexDecimal=>${hexDecimal}
