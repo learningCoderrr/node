@@ -1,1 +1,108 @@
-१
+1byte => 1 bit reserved
+2bytes => 5 bit reserved
+3bytes => 8 bit reserved
+4bytes => 11 bit reserved
+
+#	Unicode	Binary
+1	U+0041	1000001  
+this is acii table value so i will provide byte value => 01000001
+2	U+0905	100100000101
+
+total reserve seat used by utf8 is 5 bits in 2bytes of data so total remaining is 11 bytes but the total data is 12 so we have to use 3 bytes 
+so in 3 bytes we can stores 12 bits=>11100000 10100100 10000101
+
+3	U+1F600	11111011000000000
+length 17. 
+in this case we have to use 4 bytes because it taking 17 bits and we can only stores 16 bits in 24 bits because there is already 1 byte reserved seat for headers
+so we will use 32 bits were 21 will be useable=>11110000 10011111 10011000 10000000
+
+
+4	U+00A2	10100010
+so in this case it taking 8 bits and in 1byte we can only stores 7 bits . So we have to take 2 bytes where we got 11 will be available
+11000010 10100010
+
+
+5	U+20AC	10000010101100
+we can use 3 bytes because it takes 16 bits and this binary only taking 14 bits
+11100010 10000010 10101100
+6	U+007A	1111010
+this is acii table value because it taking 7 bits only 
+01111010
+7	U+2665	10011001100101
+this taking 14 bits so it takes 3 bytes because in 2bytes we can only stores 11 bits
+
+ 111000101001100110100101
+
+8	U+10348	1 0000 0011 0100 1000
+total is 17bits and it will takes 4bytes because in 3bytes we can only use 16bits  but in 4bytes we can use up to 21bits
+11110000100100001000110110001000
+
+
+9	U+03A9	11 10101001
+we can use 2 bytes because it provides 11 bits of data to store 
+1100111010101001
+10	U+4E16	10011100010110
+we have use 3bytes because it taking 14 bits 
+111000101001110010010110
+
+11	U+1D11E	11101000100011110
+total length is 17 and we can only use this on 4bytes not on 3bytes because there is only 16 bits available
+11110000100111011000010010011110
+
+12	U+0058	1011000
+this is also a ascii table 
+01011000
+13	U+0939	100100111001
+total length is 12 and we can use those only on 3bytes because in 2bytes there is only 11bits available to uses.
+11100000 10100100 10111001
+14	U+10FFFF	100001111111111111111
+we can use total 4bytes because binary total length is 21 and in 4bytes we can stores 21 bits only because there is 11 reserved by the utf8
+11110100100011111011111110111111
+15	U+00E9	11101001
+total length is 8 bits so we have to use 2bytes for storing those bits
+1100001110101001
+16	U+24B62	100100101101100010
+total length is 18 bits so we have to use 4bytes it can stores up to 21 bits
+11110000101001001010001010100010
+17	U+30A2	11000010100010
+total length is 14 bits and we can stores this into 3 bytes because in 2bytes we can only stores 11 bits 
+111000111000001010100010
+18	U+0100	100000000
+we uses 2bytes because it length is 9 bits in 2bytes we can store up to 11 bits
+1100010010000000
+19	U+FFFF	1111111111111111
+we will use 3bytes because it can stores up to 16 bits it's max capacity is 16bits
+111011111011111110111111
+20	U+0024	100100
+it is a acii table value because it's length is 6 bits and in 1byte we can store upto 7bits
+00100100
+21	U+07FF	11111111111
+we uses 2bytes because it's total length is 11bits and in 2bits we can only stores up to 11 bits because of reserved value present in it.
+1101111110111111
+22	U+1F642	11111011001 000010
+total length is 17 bits and we can only stores 16bits in 3bytes so we will use 4bytes 
+11110000100111111001100110000010
+23	U+098F	100110001111
+total length is 12bits and in 2bytes we can only stores up to 11 bits so we will use 3bytes
+111000001010011010001111
+24	U+006D	1101101
+this also a ascii table value 
+01101101
+25	U+00F1	11110001
+total bit count is 8 and we stores it in 2bytes because the total length of storing in 1 byte is upto 7bits so we will use 2bytes which has 11bits 
+1100001110110001
+26	U+16A0	1011010100000
+it's simple because it has 13 bits and we can only store this in 3bytes which has total bits useable upto 16
+111000011001101010100000
+27	U+2F8A	10111110001010
+total bits is 14 so we can only uses 3bytes to store it 
+111000101011111010001010
+28	U+10437	10000010000110111
+total length is 17 bits and it will only stores in 4bytes 
+11110000100100001001000010110111
+29	U+05D0	10111010000
+total length is 11 bits and it stored inside 2bytes
+1101011110010000
+30	U+AC00	1010110000000000
+total length is 16bits so it will takes 3bytes because it max storing capacity is 16bits only 
+111010101011000010000000

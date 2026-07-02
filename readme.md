@@ -742,3 +742,97 @@ xxd src/test.js          # view hex dump
 xxd -g 1 src/test.js     # split hex digits individually (use -g N to group by N bytes)
 xxd -b src/test.js       # view binary instead of hex
 ```
+
+# Understanding UTF-8
+
+## What is Unicode?
+
+Think of Unicode as a giant directory — a master list that assigns a unique **code point** (a specific hexadecimal number) to every character, symbol, and emoji in virtually every written language on Earth. For example:
+
+- `A` → `U+0041`
+- `अ` → `U+0905`
+- `😀` → `U+1F600`
+
+Unicode itself doesn't say _how_ to store these numbers as bytes on disk or in memory — that's where UTF-8 comes in.
+
+## What is UTF-8?
+
+UTF-8 is an **encoding scheme**: a set of rules for converting Unicode code points into actual binary data (and back again).
+
+- **Encoding** = turning a character's code point into bytes, so it can be stored or transmitted.
+- **Decoding** = reading those bytes back and reconstructing the original character.
+
+UTF-8 is smart about size — it doesn't use a fixed number of bytes for every character. Instead, it uses **1 to 4 bytes** depending on how large the code point is. This variable-length design is a big reason UTF-8 became the dominant encoding on the web: it's backward-compatible with ASCII, efficient for common characters, and flexible enough to represent every character in Unicode.
+
+## How UTF-8 Encoding Works
+
+Every UTF-8 byte carries a small "header" — a fixed bit pattern at the start that tells the decoder how many bytes make up the current character and where the actual data bits are.
+
+| Bytes used | Code point range       | Data capacity | Byte pattern                                |
+| :--------: | :--------------------- | :------------ | :------------------------------------------ |
+|     1      | `U+0000` – `U+007F`    | 7 bits        | `0xxxxxxx`                                  |
+|     2      | `U+0080` – `U+07FF`    | 11 bits       | `110xxxxx` `10xxxxxx`                       |
+|     3      | `U+0800` – `U+FFFF`    | 16 bits       | `1110xxxx` `10xxxxxx` `10xxxxxx`            |
+|     4      | `U+10000` – `U+10FFFF` | 21 bits       | `11110xxx` `10xxxxxx` `10xxxxxx` `10xxxxxx` |
+
+The `x` positions hold the actual character data; everything else is header bits used purely for decoding.
+
+### 1 byte — ASCII range
+
+Characters that fit in 7 bits (the classic ASCII table) only need a single byte. The header bit is always `0`:
+
+```
+01010101
+^
+header bit
+```
+
+### 2 bytes
+
+Used when a character needs more than 7 bits but fits within 11 bits.
+
+```
+110xxxxx  10xxxxxx
+```
+
+### 3 bytes
+
+Used when a character needs more than 11 bits but fits within 16 bits.
+
+```
+1110xxxx  10xxxxxx  10xxxxxx
+```
+
+### 4 bytes
+
+Used when a character needs more than 16 bits (up to 21 bits) — this covers things like emoji and rarer historic scripts.
+
+```
+11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
+```
+
+## A Note on Combined Characters
+
+Some visual characters aren't a single code point at all — they're built by combining multiple code points together. Each of those code points gets encoded separately, so the total byte count adds up quickly.
+
+**Example:** `त्र`
+
+This single glyph is actually a combination of three separate characters:
+
+| Component | Meaning                           |
+| :-------: | :-------------------------------- |
+|     त     | ta                                |
+|     ्     | virama (joins the next consonant) |
+|     र     | ra                                |
+
+Each of these three characters falls in the Devanagari block, which requires **3 bytes** per character in UTF-8. So the full glyph `त्र` takes:
+
+$$3 \text{ characters} \times 3 \text{ bytes} = 9 \text{ bytes total}$$
+
+## Why UTF-8 Won
+
+UTF-8 isn't the only encoding — UTF-16 and UTF-32 also exist — but UTF-8 became the de facto standard because it:
+
+- Is fully backward-compatible with ASCII (any valid ASCII file is already valid UTF-8)
+- Handles the full range of Unicode, from 8-bit to 32-bit needs, using a compact variable-length scheme
+- Is supported virtually everywhere, making it the safest default for the web, files, and APIs
