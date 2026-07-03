@@ -757,7 +757,8 @@ Unicode itself doesn't say _how_ to store these numbers as bytes on disk or in m
 
 ## What is UTF-8?
 
-UTF-8 is an **encoding scheme**: a set of rules for converting Unicode code points into actual binary data (and back again).
+> UTF Full form => Unicode Transform Formate
+> UTF-8 is an **encoding scheme**: a set of rules for converting Unicode code points into actual binary data (and back again).
 
 - **Encoding** = turning a character's code point into bytes, so it can be stored or transmitted.
 - **Decoding** = reading those bytes back and reconstructing the original character.
@@ -836,3 +837,90 @@ UTF-8 isn't the only encoding — UTF-16 and UTF-32 also exist — but UTF-8 bec
 - Is fully backward-compatible with ASCII (any valid ASCII file is already valid UTF-8)
 - Handles the full range of Unicode, from 8-bit to 32-bit needs, using a compact variable-length scheme
 - Is supported virtually everywhere, making it the safest default for the web, files, and APIs
+
+# UTF-16 and UTF-32
+
+## UTF-16
+
+UTF-16 encodes each character using a **code unit** of 2 bytes (16 bits) — that's 4 hexadecimal digits.
+
+- Most common characters (in the Basic Multilingual Plane) fit in a single 2-byte code unit.
+- Characters that need more than 16 bits (e.g. emoji, rare scripts) are represented using a **surrogate pair** — two 2-byte code units combined, giving 4 bytes total.
+- Because its _minimum_ unit size is 16 bits, it's called **UTF-16**.
+
+## UTF-32
+
+UTF-32 always uses a **fixed** 4 bytes (32 bits) per character — that's 8 hexadecimal digits.
+
+- Every character, regardless of complexity, takes exactly 4 bytes. Nothing more, nothing less.
+- Since its storage size is fixed at 32 bits, it's called **UTF-32**.
+
+| Encoding | Bytes per unit                   | Hex digits  | Size behavior |
+| -------- | -------------------------------- | ----------- | ------------- |
+| UTF-16   | 2 (up to 4 with surrogate pairs) | 4 (up to 8) | Variable      |
+| UTF-32   | 4 (fixed)                        | 8           | Fixed         |
+
+---
+
+# Endianness
+
+Every computer architecture has its own convention for the _order_ in which it stores the bytes of a multi-byte value.
+
+A good analogy is how different countries write dates:
+
+- India: `DD/MM/YYYY`
+- USA: `MM/DD/YYYY`
+
+Both represent the same date, but the _order_ is different — and if you don't know which convention is being used, you'll misread it. Computers face the same problem when storing multi-byte data: without knowing the byte order, the same bytes can be interpreted as completely different values. This is why a **BOM (Byte Order Mark)** is used to declare the order being used.
+
+## Types of Endianness
+
+### 1. Big Endian (BE)
+
+Stores bytes from **most significant to least significant**, left to right — the same order humans naturally read numbers in.
+
+```
+0x4b5a  →  [4b, 5a]
+```
+
+### 2. Little Endian (LE)
+
+Stores bytes from **least significant to most significant** — reversed order.
+
+```
+0x76f7  →  [f7, 76]
+```
+
+Both BE and LE are used across UTF-16, UTF-32, etc.
+
+---
+
+# BOM (Byte Order Mark)
+
+The BOM tells a system how to interpret (or reorder) the bytes it reads, based on the endianness used when the data was written.
+
+- The BOM is the reserved character **`U+FEFF`**.
+- When encoded, it appears as **2 bytes** at the very start of the data (a header).
+- The _order_ those 2 bytes appear in reveals whether the rest of the file is Big Endian or Little Endian.
+
+## Little Endian BOM
+
+Bytes appear as `FF FE`.
+
+Example (UTF-16, value `0x0873`, `0x76ba`):
+
+```
+0x0873 76ba  →  [FF, FE, 73, 08, ba, 76]
+```
+
+## Big Endian BOM
+
+Bytes appear as `FE FF`.
+
+Example (UTF-16, value `0x127b`, `0x3a8c`):
+
+```
+0x127b 3a8c  →  [FE, FF, 12, 7b, 3a, 8c]
+```
+
+> **Note:** UTF-8 does not need a BOM for byte-order purposes since it's a byte-oriented (not word-oriented) encoding, though a UTF-8 BOM is sometimes still seen in the wild as a file-format signature.
