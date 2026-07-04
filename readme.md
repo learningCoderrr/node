@@ -922,3 +922,16 @@ Example (UTF-16, value `0x127b`, `0x3a8c`):
 ```
 
 > **Note:** UTF-8 does not need a BOM for byte-order purposes since it's a byte-oriented (not word-oriented) encoding, though a UTF-8 BOM is sometimes still seen in the wild as a file-format signature.
+
+## Array Buffer in JavaScript
+
+Array buffers are arrays of storage, meaning we can store binary data in them. Anything that we store inside this binary array is stored in RAM (system memory). We can store data in binary form, not in KB, MB, GB, etc.
+With the help of Array Buffers, we can store up to 2GiB of binary data in RAM using JavaScript.
+
+> We wouldn't be able to write or read the data in an Array Buffer; we can only inspect it and view the value.
+> In the browser or in a Node.js environment, we can create an `ArrayBuffer` to allocate memory in ram with the help of `ArrayBuffer` constructor function. The params of this constructor function take a number's of binary's space in `RAM`. If nothing is written, the binary value is `00000000` and the memory is not occupied. If some value is written, then it occupies the ram space.
+
+```js
+const buffers = new ArrayBuffer(1024);
+console.log(buffers);
+```
