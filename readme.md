@@ -1,8 +1,6 @@
 # Node.js
 
-So demo what we can do with NodeJs
-
-## HTTP Server
+## Demo of NodeJs
 
 We can create a new HTTP server with the help of the Node.js module `http`.
 
