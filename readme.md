@@ -1041,3 +1041,42 @@ An **unsigned** binary number represents **only non-negative values** (0 and pos
 | Same bit pattern, different value? | ➡️ `10000001` = **-127** | ➡️ `10000001` = **129** |
 
 **💡 Takeaway:** The exact same sequence of bits can mean **completely different numbers** depending on whether it's interpreted as signed or unsigned!
+
+## ✍️ Writing to ArrayBuffer
+
+We **can't directly** update or add values into an `ArrayBuffer`. To read or write data, we need to use either a **Typed Array** or a **DataView**.
+
+---
+
+### 🔍 DataView
+
+```ts
+const buffer = new ArrayBuffer(10); // new ArrayBuffer(digits in byte);
+const view = new DataView(buffer);
+// 👆 new DataView(buffer, startingIndexInBuffer)
+
+view.setInt8(0, 0xff);
+// sets a SIGNED 8-bit value → view.setInt8(index, data)
+
+view.getInt8(0);
+// gets a SIGNED 8-bit value → view.getInt8(index)
+
+view.getUint8(0);
+// gets an UNSIGNED 8-bit value → view.getUint8(index)
+
+view.setUint8(1, 203);
+// sets an UNSIGNED 8-bit value → view.setUint8(index, data)
+
+console.log(view);
+```
+
+---
+
+### 🆚 Quick Reference
+
+| Method                  | Type                         |
+| ----------------------- | ---------------------------- |
+| `setInt8(index, data)`  | Set **signed** 8-bit value   |
+| `getInt8(index)`        | Get **signed** 8-bit value   |
+| `setUint8(index, data)` | Set **unsigned** 8-bit value |
+| `getUint8(index)`       | Get **unsigned** 8-bit value |
