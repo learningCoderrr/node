@@ -935,3 +935,109 @@ With the help of Array Buffers, we can store up to 2GiB of binary data in RAM us
 const buffers = new ArrayBuffer(1024);
 console.log(buffers);
 ```
+
+# 🔢 Signed and Unsigned Numbers
+
+## ➕➖ Signed Numbers
+
+A **signed** binary number can represent both **positive** and **negative** values.
+
+Modern computers use **two's complement** to represent signed integers.
+
+The **MSB (Most Significant Bit)** — the leftmost bit — tells you the sign:
+
+| MSB | Meaning               |
+| --- | --------------------- |
+| `0` | ✅ Positive (or zero) |
+| `1` | ❌ Negative           |
+
+---
+
+### 🔹 Example: MSB = 0 (Positive)
+
+```text
+011110
+^
+MSB = 0  →  Positive number
+```
+
+**Decimal value:** `30`
+
+---
+
+### 🔹 Converting a Negative Signed Binary Number
+
+When MSB = `1`, follow these **3 simple steps**:
+
+1. **Invert** every bit (`0 → 1`, `1 → 0`)
+2. **Add 1** to the result
+3. **Convert** to decimal and add a **minus sign** (`-`)
+
+> This process is called **two's complement**.
+
+**Example:**
+
+```text
+10000001
+^
+MSB = 1  →  Negative number
+```
+
+**Step 1 — Invert the bits:**
+
+```text
+01111110
+```
+
+**Step 2 — Add 1:**
+
+```text
+  01111110
++        1
+-----------
+  01111111
+```
+
+**Step 3 — Convert to decimal:**
+
+```text
+01111111 = 127
+```
+
+**Final Result:**
+
+```text
+10000001 = -127 ✅
+```
+
+---
+
+## 🔵 Unsigned Numbers
+
+An **unsigned** binary number represents **only non-negative values** (0 and positive numbers).
+
+🔑 **Key difference:** There is **no sign bit** — every single bit contributes purely to the number's value.
+
+### Examples
+
+```text
+101010 = 42
+```
+
+```text
+10000001 = 129
+```
+
+> ⚠️ **Important:** Even though the MSB is `1` in the second example, the value is still **positive (129)** — because we're reading it as **unsigned**, not signed!
+
+---
+
+## 🆚 Signed vs Unsigned — Quick Comparison
+
+| Feature                            | Signed                   | Unsigned                |
+| ---------------------------------- | ------------------------ | ----------------------- |
+| Can be negative?                   | ✅ Yes                   | ❌ No                   |
+| Uses MSB as sign bit?              | ✅ Yes                   | ❌ No                   |
+| Same bit pattern, different value? | ➡️ `10000001` = **-127** | ➡️ `10000001` = **129** |
+
+**💡 Takeaway:** The exact same sequence of bits can mean **completely different numbers** depending on whether it's interpreted as signed or unsigned!
