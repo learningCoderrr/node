@@ -1067,16 +1067,72 @@ view.getUint8(0);
 view.setUint8(1, 203);
 // sets an UNSIGNED 8-bit value → view.setUint8(index, data)
 
-console.log(view);
+// multi byte writing binary
+
+view.setInt16(4, 0xff83, true);
+// view.setInt16(index, 2 byte binary data, littleEndian?)
+
+view.getInt16(4, true);
+// view.getInt16(index, littleEndian?)
+
+view.setUint16(4, 0xffff, true);
+// view.setUint16(index, 2 byte binary data, littleEndian?)
+
+view.getUint16(4, true);
+// view.getUint16(index, littleEndian?)
+
+view.setInt32(6, 0xfadfb6bc, true);
+// view.setInt32(index, 4 byte binary data, littleEndian?)
+
+view.getInt32(6, true);
+// view.getInt32(index, littleEndian?)
+
+view.setUint32(6, 0xffffffff);
+// view.setUint32(index, 4 byte binary data) → no 3rd arg = big endian (default)
+
+view.getUint32(6);
+// view.getUint32(index) → no 2nd arg = big endian (default)
 ```
 
 ---
 
 ### 🆚 Quick Reference
 
-| Method                  | Type                         |
-| ----------------------- | ---------------------------- |
-| `setInt8(index, data)`  | Set **signed** 8-bit value   |
-| `getInt8(index)`        | Get **signed** 8-bit value   |
-| `setUint8(index, data)` | Set **unsigned** 8-bit value |
-| `getUint8(index)`       | Get **unsigned** 8-bit value |
+| Method                                  | Type                          | Bytes   |
+| --------------------------------------- | ----------------------------- | ------- |
+| `setInt8(index, data)`                  | Set **signed** 8-bit value    | 1 byte  |
+| `getInt8(index)`                        | Get **signed** 8-bit value    | 1 byte  |
+| `setUint8(index, data)`                 | Set **unsigned** 8-bit value  | 1 byte  |
+| `getUint8(index)`                       | Get **unsigned** 8-bit value  | 1 byte  |
+| `setInt16(index, data, littleEndian?)`  | Set **signed** 16-bit value   | 2 bytes |
+| `getInt16(index, littleEndian?)`        | Get **signed** 16-bit value   | 2 bytes |
+| `setUint16(index, data, littleEndian?)` | Set **unsigned** 16-bit value | 2 bytes |
+| `getUint16(index, littleEndian?)`       | Get **unsigned** 16-bit value | 2 bytes |
+| `setInt32(index, data, littleEndian?)`  | Set **signed** 32-bit value   | 4 bytes |
+| `getInt32(index, littleEndian?)`        | Get **signed** 32-bit value   | 4 bytes |
+| `setUint32(index, data, littleEndian?)` | Set **unsigned** 32-bit value | 4 bytes |
+| `getUint32(index, littleEndian?)`       | Get **unsigned** 32-bit value | 4 bytes |
+
+> ⚠️ **`littleEndian` param:**
+>
+> - `true` → **little endian** (least significant byte stored first)
+> - `false` / omitted → **big endian** (most significant byte stored first) — this is the **default**
+
+---
+
+### 🔑 Important: Setter Doesn't Matter — Only the Getter Does!
+
+Whether you **write** a value using a `signed` setter (`setInt8`, `setInt16`...) or an `unsigned` setter (`setUint8`, `setUint16`...), the **raw binary bits stored in memory are exactly the same**.
+
+The **type of setter you used has no effect on how it's stored** — it's just raw bits sitting in the buffer. What actually matters is **which getter you use to read it back**.
+
+```ts
+view.setInt8(0, 0xff); // stores raw bits: 11111111
+
+view.getInt8(0); // reads as SIGNED → -1
+view.getUint8(0); // reads as UNSIGNED → 255
+```
+
+👉 **Same bits `11111111`, but two completely different results** — because `getInt8` interprets the MSB as a sign bit, while `getUint8` treats every bit as part of the value.
+
+> 💡 **Takeaway:** Signed vs unsigned is not a property of the _stored data_ — it's just **how you choose to interpret it when reading**. The buffer only stores raw bits; meaning is added at read-time.
