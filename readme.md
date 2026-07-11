@@ -1136,3 +1136,73 @@ view.getUint8(0); // reads as UNSIGNED → 255
 👉 **Same bits `11111111`, but two completely different results** — because `getInt8` interprets the MSB as a sign bit, while `getUint8` treats every bit as part of the value.
 
 > 💡 **Takeaway:** Signed vs unsigned is not a property of the _stored data_ — it's just **how you choose to interpret it when reading**. The buffer only stores raw bits; meaning is added at read-time.
+
+## 🧩 Typed Array
+
+A **Typed Array** helps you read and write values in an `ArrayBuffer` — just like `DataView`, but **much easier to use**.
+
+It behaves like a **regular array** — you can use all normal array methods and properties, **except** ones that change its length (like `push`, `pop`, `splice`).
+
+---
+
+### 🔹 Creating a Typed Array
+
+There are a few different ways to create one:
+
+```ts
+// 1️⃣ Attach to an existing ArrayBuffer
+const buffer: ArrayBuffer = new ArrayBuffer(100);
+const test1: Int8Array = new Int8Array(buffer);
+
+// 2️⃣ Create an empty buffer directly (simplest way)
+const test2: Int8Array = new Int8Array(200);
+// 👆 creates a buffer of 200 bytes
+
+// 3️⃣ Create WITH values directly
+const test3: Int8Array = new Int8Array([0xff, 0xdf, 0x68, 0xdd]);
+// 👆 creates a buffer already filled with these values
+```
+
+> 💡 **Note:** Typed Arrays always work with **little endian** by default, and this **cannot be changed** (unlike `DataView`, which lets you choose).
+
+---
+
+### 🔹 Byte Size Per Element
+
+Depending on which Typed Array you use, each index stores a different number of bytes:
+
+| Constructor      | Bytes per element | Interpreted as |
+| ---------------- | ----------------- | -------------- |
+| `Int8Array()`    | 1 byte            | Signed         |
+| `Int16Array()`   | 2 bytes           | Signed         |
+| `Int32Array()`   | 4 bytes           | Signed         |
+| `Uint8Array()`   | 1 byte            | Unsigned       |
+| `Uint16Array()`  | 2 bytes           | Unsigned       |
+| `Uint32Array()`  | 4 bytes           | Unsigned       |
+| `Float16Array()` | 2 bytes           | Floating point |
+| `Float32Array()` | 4 bytes           | Floating point |
+| `Float64Array()` | 8 bytes           | Floating point |
+
+---
+
+### 🔹 Reading & Writing Values
+
+```ts
+const typedArray: Uint16Array = new Uint16Array(10);
+// 👆 length = 10, each element = 2 bytes
+// total memory used = 10 × 2 = 20 bytes
+
+typedArray[0] = 0xffdf; // ✅ write
+console.log(typedArray[0]); // ✅ read
+```
+
+---
+
+### 🎯 Quick Takeaway
+
+| Feature            | DataView                      | Typed Array                       |
+| ------------------ | ----------------------------- | --------------------------------- |
+| Ease of use        | More manual                   | Simpler (array-like syntax)       |
+| Endianness control | ✅ Yes (choose per call)      | ❌ No (always little endian)      |
+| Access style       | `view.getInt8(0)`             | `typedArray[0]`                   |
+| Best for           | Mixed types / precise control | Same type across the whole buffer |
