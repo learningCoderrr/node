@@ -1206,3 +1206,74 @@ console.log(typedArray[0]); // ✅ read
 | Endianness control | ✅ Yes (choose per call)      | ❌ No (always little endian)      |
 | Access style       | `view.getInt8(0)`             | `typedArray[0]`                   |
 | Best for           | Mixed types / precise control | Same type across the whole buffer |
+
+## 🗂️ Node.js Buffer
+
+`Buffer` is Node.js's way to work with raw binary data in memory — **without you having to manually create an `ArrayBuffer`**.
+
+Node.js `Buffer` uses a **Typed Array** internally to read/write data — it does **not** use `DataView`.
+
+---
+
+### 🔹 Creating a Buffer
+
+```js
+import { Buffer } from "node:buffer";
+// 👆 needed only if you want to manually create a buffer
+```
+
+There are **two main methods** to allocate memory for a buffer:
+
+---
+
+### 1️⃣ `Buffer.alloc(size)` — Safe, but Slower
+
+- Allocates memory and **actively clears it (fills with zeros)** before giving it to you.
+- Because it has to clean the memory first, it's **slower** — especially for large sizes.
+- ✅ **Safe** — you'll never see old/leftover data by accident.
+
+```js
+Buffer.alloc(5024);
+// allocates 5024 bytes, all zeroed out, ready to use safely
+```
+
+---
+
+### 🧠 First, Understand How Memory Actually Works
+
+When data is **deleted or garbage collected (GC)**, the data does **not** actually get erased from that memory space. It just **stays there as it is**.
+
+That old data will **remain in memory for a long time** — until some new data is written on top of it. If nothing writes new data into that space, the **old data just keeps sitting there, untouched, unchanged**.
+
+> 💡 In simple words: "Deleting" data doesn't clean it. It only marks the space as "free to use again." The actual old values stay in memory until something overwrites them.
+
+This is exactly why `allocUnsafe()` can show old data — it's simply the leftover bits from whatever was stored there before.
+
+---
+
+### 2️⃣ `Buffer.allocUnsafe(size)` — Fast, but Risky
+
+- Allocates memory **without clearing it first** — so it may contain **old/stale data** that was already sitting in that memory space (as explained above).
+- ⚡ **Faster than `alloc()`** — but this speed benefit really only shows up with **larger allocations**.
+
+> 🔑 **Important detail:** For **small allocations (below ~5 KiB)**, Node.js **still clears the memory anyway** — same as `alloc()`. It's only when you ask for **more than ~5 KiB** that it skips the cleaning step completely and gives you the raw memory as-is (which may have old data in it). That's where the real speed boost comes from.
+
+```js
+Buffer.allocUnsafe(5000);
+// small-ish allocation → Node may still clear it internally
+// ⚠️ For allocations ABOVE ~5 KiB, it skips clearing → much faster, but old data may appear
+```
+
+---
+
+### 🆚 Quick Comparison
+
+| Feature              | `alloc()`                       | `allocUnsafe()`                                  |
+| -------------------- | ------------------------------- | ------------------------------------------------ |
+| Clears memory first? | ✅ Always                       | ⚠️ Only for small sizes (~<5 KiB)                |
+| Speed on large data  | 🐢 Slower                       | ⚡ Much faster                                   |
+| Initial data         | ✅ Always zeroed                | ⚠️ May contain old data (large allocations)      |
+| Safety               | ✅ Safe by default              | ⚠️ Must manually overwrite before use            |
+| Best for             | Small / security-sensitive data | Large buffers you'll immediately fill completely |
+
+> 💡 **Rule of thumb:** Use `alloc()` unless you have a **performance-critical** reason to use `allocUnsafe()` for **large** buffers. If you do use it, make sure to **completely overwrite** every byte yourself right away — otherwise old memory data could leak through into your application.
