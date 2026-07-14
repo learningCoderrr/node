@@ -1277,3 +1277,126 @@ Buffer.allocUnsafe(5000);
 | Best for             | Small / security-sensitive data | Large buffers you'll immediately fill completely |
 
 > 💡 **Rule of thumb:** Use `alloc()` unless you have a **performance-critical** reason to use `allocUnsafe()` for **large** buffers. If you do use it, make sure to **completely overwrite** every byte yourself right away — otherwise old memory data could leak through into your application.
+
+## 🏊 Buffer Pool
+
+### 🤔 First — Why Does a Buffer Pool Even Exist?
+
+Every time you create a `Buffer`, Node needs to **ask the operating system for some memory**. Asking the OS for memory again and again — even for tiny buffers — takes time. It's a bit like going to the shop every single time you need one spoon of sugar, instead of just keeping a sugar jar at home.
+
+So Node created a smarter solution: **keep one big "jar" of memory ready in advance**, and whenever a small buffer is needed, just take a small piece from that jar instead of going to the OS again.
+
+That "jar" is called the **Buffer Pool**.
+
+---
+
+### 📦 What Exactly Is the Buffer Pool?
+
+It's just **one pre-allocated chunk of memory**, created using an `ArrayBuffer` internally, when your Node app starts (or the first time it's needed).
+
+You can check its size like this:
+
+```js
+Buffer.poolSize;
+```
+
+By default, this is **8192 bytes (8 KiB)**.
+
+Think of it as: Node has already taken **one big 8 KiB block of memory** from the OS, ready and waiting. Now whenever a small buffer request comes in, Node just **slices a small piece off this block** instead of asking the OS fresh each time.
+
+---
+
+### 🔑 So When Does Node Actually Use the Pool?
+
+Not every buffer uses the pool. Node has a rule to decide.
+
+Let's say you write:
+
+```js
+Buffer.allocUnsafe(1000);
+```
+
+Node checks: **is 1000 smaller than half of poolSize?**
+
+```
+poolSize = 8192
+half of poolSize = 4096
+
+Is 1000 < 4096? → YES ✅
+```
+
+Since your requested size is **less than half the pool**, Node says: _"Okay, this is small enough — I'll just cut a piece from the existing pool instead of creating new memory."_ This is fast, because no new request to the OS is needed.
+
+---
+
+### 🚫 But What If You Ask for a Big Size?
+
+```js
+Buffer.allocUnsafe(5000);
+```
+
+Now Node checks again:
+
+```
+half of poolSize = 4096
+Is 5000 < 4096? → NO ❌
+```
+
+Since 5000 is **bigger than half the pool size**, Node decides: _"This is too big to take from the shared pool — I'll create a completely separate, brand new `ArrayBuffer` just for this one buffer."_
+
+**Why?** Because if Node gave a huge chunk of the shared pool to just one buffer, there wouldn't be much pool left for other small buffers. So Node protects the pool by only sharing it for **small** requests.
+
+---
+
+### 🔄 What Happens When the Pool Runs Out of Space?
+
+Imagine the pool is 8 KiB, and bit by bit, small buffers keep taking slices from it. Eventually, the pool becomes **full** — no space left to give.
+
+When that happens, Node simply says: _"This pool is used up, let me create a fresh new pool"_ — and a new 8 KiB (or whatever size you've set) pool is created to keep serving future small buffer requests.
+
+> 💡 **Important detail:** If you change `Buffer.poolSize` to a different value, it does **NOT** affect the pool that's currently in use. Your new size will only apply the **next time** Node needs to create a new pool (i.e., when the current one runs out).
+
+---
+
+### ⚡ Why Does Using the Pool Make Things Faster?
+
+Because taking a slice from **memory that's already been allocated** is much quicker than making a **fresh request to the operating system** every time. It's the difference between:
+
+- 🐢 Going outside to buy sugar every time (no pool)
+- ⚡ Just scooping from the jar already sitting on your kitchen counter (using the pool)
+
+---
+
+### 🔹 Which Methods Actually Use the Buffer Pool?
+
+**1️⃣ `Buffer.allocUnsafe(size)`**
+
+- Grabs memory **without cleaning it first**.
+- If the size qualifies (less than half the pool), it takes a slice from the pool — fast, but may contain old leftover data since nothing was cleaned.
+
+**2️⃣ `Buffer.from(data)`**
+
+- Used when you already have data (like an array of numbers, or an `ArrayBuffer`) and want to turn it into a Buffer.
+- It also uses the pool when possible, so creating it is quicker than starting completely from scratch.
+
+**3️⃣ `Buffer.concat([...])`**
+
+- Used to **join multiple buffers into one single buffer**.
+- Instead of creating a fresh new memory space and copying everything in a slow way, it uses the pool (when possible) to combine the data more efficiently.
+
+---
+
+### 🆚 Quick Summary Table
+
+| Method                     | Uses Buffer Pool?                  | What it actually does                                 |
+| -------------------------- | ---------------------------------- | ----------------------------------------------------- |
+| `Buffer.allocUnsafe(size)` | ✅ Yes (only if size < poolSize/2) | Fast raw memory, may contain old data                 |
+| `Buffer.from(data)`        | ✅ Yes                             | Builds a buffer from existing array/ArrayBuffer data  |
+| `Buffer.concat([...])`     | ✅ Yes                             | Merges multiple buffers into one                      |
+| `Buffer.alloc(size)`       | ❌ No                              | Always creates clean, zeroed memory (safe but slower) |
+
+---
+
+### 🎯 The Big Picture Takeaway
+
+The Buffer Pool is Node's way of **avoiding repeated, slow trips to the operating system** for small memory requests. It pre-allocates a chunk of memory once, and hands out small pieces of it whenever needed — as long as the request isn't too big. Once the pool is full or a request is too large, Node falls back to creating **fresh memory separately**.
