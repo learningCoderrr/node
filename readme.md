@@ -1400,3 +1400,118 @@ Because taking a slice from **memory that's already been allocated** is much qui
 ### 🎯 The Big Picture Takeaway
 
 The Buffer Pool is Node's way of **avoiding repeated, slow trips to the operating system** for small memory requests. It pre-allocates a chunk of memory once, and hands out small pieces of it whenever needed — as long as the request isn't too big. Once the pool is full or a request is too large, Node falls back to creating **fresh memory separately**.
+
+## 🔤 Base64
+
+**Base64** is an **encoder and decoder**. Its job is to take **binary data** and convert it into a **printable text (string) format**.
+
+That binary data can be **anything** — text, a PDF, a `.docx`, a PNG, a WebP, an MP4, an MP3 — literally anything, because **at the physical level, every single file is just binary**. What makes it a "text file" or "image file" or "audio file" is only **how the interpreter/decoder chooses to read that binary** — the underlying bits themselves don't carry a label.
+
+> 💡 **Example:** The bits `101010001` could be a chunk of an audio file, or it could just as easily be a plain number, or an ASCII character — the bits alone don't tell you what they "are." Meaning is added by whoever reads/interprets them.
+
+**Base64's only job:** take that binary and turn it into readable text characters.
+
+---
+
+### 📏 Rules for Converting to Base64
+
+1. The total number of bytes must be a **multiple of 3**.
+2. If it's not, add **dummy (zero) bytes** at the end until it becomes a multiple of 3.
+3. Break the bits down into **chunks of 6 bits each**.
+
+---
+
+### 🔹 Example 1: Text (ASCII/Unicode)
+
+If your input is text, it first gets converted into binary using a text encoding scheme (like `UTF-8`, `UTF-16`, `UTF-32`).
+
+```text
+text   → abcd
+binary → 01100001 01100010 01100011 01100100
+```
+
+This is **4 bytes** — not a multiple of 3 — so we pad it with **2 dummy zero bytes** to make it **6 bytes** (the next multiple of 3):
+
+```text
+padded binary → 01100001 01100010 01100011 01100100 00000000 00000000
+```
+
+Now break it into **6-bit chunks**:
+
+```text
+011000 010110 001001 100011 011001 000000 000000 000000
+```
+
+Each 6-bit chunk maps to a Base64 character, giving us:
+
+```text
+YWJjZA==
+```
+
+**Final result:** `YWJjZA==`
+
+> ⚠️ **Important:** The last **two** characters become `==` (padding symbols), **not** actual computed letters like `AA`. This is because those last 2 characters come **entirely from the dummy bytes we added**, not from real data — so Base64 marks them with `=` instead of showing a "fake" letter.
+>
+> **Simple rule:** the number of `=` at the end always matches how many dummy bytes you had to add (1 dummy byte → one `=`, 2 dummy bytes → `==`).
+
+---
+
+### 🔹 Example 2: A Plain Number (No Text Encoder)
+
+```text
+decimal → 27
+binary  → 00011011   (1 byte)
+```
+
+Pad to 3 bytes (multiple of 3) by adding 2 dummy bytes:
+
+```text
+00011011 00000000 00000000
+```
+
+Break into 6-bit chunks:
+
+```text
+000110 110000 000000 000000
+```
+
+**Final result:** `Gw==`
+
+> Again — 2 dummy bytes were added, so the output ends in `==`.
+
+---
+
+### 🆚 Quick Reference: Padding Rule
+
+| Real bytes left over      | Dummy bytes added | `=` symbols at the end |
+| ------------------------- | ----------------- | ---------------------- |
+| 2 bytes                   | 1 dummy byte      | `=` (one)              |
+| 1 byte                    | 2 dummy bytes     | `==` (two)             |
+| 0 (already multiple of 3) | none              | no padding needed      |
+
+---
+
+### Using Base64 in JavaScript
+
+In If we want to convert this thing using javascript we has to use `btoa` function. It also known as binary to ascii. Base64 also known as ascii subset
+
+```js
+const base64 = btoa("hello");
+console.log(base64);
+
+const base642 = btoa(0xfad);
+// JavaScript first converts the number into its string form (0xfad → "4013"),
+// then btoa reads each character separately and converts it into a byte using its char code (0–255).
+// It looks similar to UTF-8 because for normal digits/letters, char code and UTF-8 byte value are the same,
+// but btoa is not running actual UTF-8 encoding — it's just char-code-to-byte conversion.
+
+console.log(base642);
+
+//textValue to binary using `atob` function ascii to binary
+const finalValue = atob("YWJjZA==");
+console.log(finalValue);
+```
+
+> 💡 **Important:** `btoa` only works correctly with characters that have char codes 0–255. Passing text with special/Unicode characters outside that range will throw an error — you'd need to convert it via `TextEncoder` first.
+
+---
