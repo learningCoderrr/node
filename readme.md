@@ -1515,3 +1515,89 @@ console.log(finalValue);
 > 💡 **Important:** `btoa` only works correctly with characters that have char codes 0–255. Passing text with special/Unicode characters outside that range will throw an error — you'd need to convert it via `TextEncoder` first.
 
 ---
+
+## ⚡ Event Driven Architecture
+
+**Event Driven Architecture** is a way of designing an application around **events** — where different parts of the app react to things happening.
+
+There are **3 main core concepts** in this architecture:
+
+1. Event Emitter
+2. Event Listener
+3. Event Handler
+
+---
+
+### 1️⃣ Event Emitter
+
+The thing that **triggers / emits** an action or event is called an **Event Emitter**.
+
+**Examples:**
+
+- In the DOM (JavaScript), elements like `<h1>`, `<sub>`, `<sup>`, `<time>`, `<div>`, `<section>`, etc. are Event Emitters — they emit events like click, hover, drag, etc.
+- In a chat app, the **members sending messages** are the Event Emitters.
+
+---
+
+### 2️⃣ Event Listener
+
+The one that **watches for** an event created by an Event Emitter, and pays attention when that **specific event** happens.
+
+**Examples:**
+
+- An `<h1>` element creates many events when a user interacts with it — hover, drag, mouse-in, etc. But if we only care about the **click** event, then we specifically **listen** for that one action.
+- With Google Assistant, **we (the user)** act as the Event Emitter, and **Google Assistant is the Listener** — it's always listening for the phrase `"Hi Google..."`.
+
+---
+
+### 3️⃣ Event Handler
+
+Once the Event Listener detects the action, it needs to **do something** in response — that "something" is handled by the **Event Handler**.
+
+**Examples:**
+
+- When we click an `<h1>` element (Event Emitter), that click event is picked up by a listener, and then a **callback function runs** — that callback is the Event Handler.
+- With Google Assistant: the user is the Event Emitter, and the Assistant acts as **both Listener and Handler** — it ignores random actions, but the moment it hears `"Hi Google..."`, it listens **and** responds — that response is the handling part.
+
+---
+
+### 🆚 Quick Comparison
+
+| Concept            | Role                          | Example                          |
+| ------------------ | ----------------------------- | -------------------------------- |
+| **Event Emitter**  | Triggers/creates the event    | User clicking, sending a message |
+| **Event Listener** | Watches for a specific event  | `addEventListener("click", ...)` |
+| **Event Handler**  | Responds when the event fires | The callback function that runs  |
+
+---
+
+### 🔧 How Node.js Uses This
+
+Node.js relies heavily on **Event Driven Architecture** to handle all its **I/O operations** — and all of this happens **asynchronously** (without blocking the rest of the code).
+
+Common I/O operations that use this pattern:
+
+1. 📄 Reading/Writing files
+2. 🌐 Network requests/responses
+3. ⌨️ Taking user input
+4. ...and many more
+
+---
+
+### 🔹 Example: Reading a File in Node.js
+
+```js
+fs.readFile("file.txt", (err, data) => {
+  console.log(data);
+});
+```
+
+Here's how the 3 concepts map to this code:
+
+| Concept            | What's happening                                                            |
+| ------------------ | --------------------------------------------------------------------------- |
+| **Event Emitter**  | The OS starts reading the file, and once done, it emits a "done" event      |
+| **Event Listener** | The `readFile()` method — its job is to listen for that event               |
+| **Event Handler**  | The `cb` (callback function) — it handles the response once the event fires |
+
+> 💡 **Takeaway:** In Node.js, almost every I/O task follows the same flow: **something triggers an action (Emitter) → something is watching for it to finish (Listener) → something runs in response (Handler)**. This is exactly what makes Node.js efficient at handling many operations at once without blocking.
