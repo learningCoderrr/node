@@ -1632,7 +1632,9 @@ const handleJump = function () {
 
 ```js
 event.on("jump", handleJump);
-event.on("jump", () => console.log("I am the second handler for jump"));
+event.on("jump", (event) =>
+  console.log("I am the second handler for jumping " + event),
+);
 ```
 
 > 💡 We can attach **multiple handlers** to the same event — all of them will run whenever that event fires.
@@ -1644,8 +1646,8 @@ event.on("jump", () => console.log("I am the second handler for jump"));
 `event.once(eventName, handler)` also creates a listener, but it only runs **once**. After it fires a single time, it's automatically **removed from memory**.
 
 ```js
-event.once("electricity", () => {
-  console.warn("Would not touch cable");
+event.once("electricity", (event) => {
+  console.warn("Would not touch the cable it is " + event);
 });
 ```
 
@@ -1656,8 +1658,8 @@ event.once("electricity", () => {
 `event.emit(eventName, ...args)` is how we **manually fire** an event, running all its attached listeners.
 
 ```js
-event.emit("jump");
-event.emit("electricity");
+event.emit("jump", "30m");
+event.emit("electricity", "200v");
 ```
 
 ---
