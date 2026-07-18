@@ -1656,7 +1656,8 @@ event.once("electricity", () => {
 `event.emit(eventName, ...args)` is how we **manually fire** an event, running all its attached listeners.
 
 ```js
-event.emit("jump", "electricity");
+event.emit("jump");
+event.emit("electricity");
 ```
 
 ---
