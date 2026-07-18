@@ -1601,3 +1601,81 @@ Here's how the 3 concepts map to this code:
 | **Event Handler**  | The `cb` (callback function) — it handles the response once the event fires |
 
 > 💡 **Takeaway:** In Node.js, almost every I/O task follows the same flow: **something triggers an action (Emitter) → something is watching for it to finish (Listener) → something runs in response (Handler)**. This is exactly what makes Node.js efficient at handling many operations at once without blocking.
+
+## 🎯 EventEmitter Class in Node.js
+
+Node.js gives us a built-in `EventEmitter` class that lets us **create our own custom events** and **handle them** using Event Listeners and Event Handlers.
+
+It provides an **object** where we can define events and emit (trigger) them ourselves in our program.
+
+> 💡 This is a **custom** event system we build — separate from Node's own internal events (like the file-reading example from before). Node.js uses this same `EventEmitter` class internally too.
+
+---
+
+### 🔧 Basic Setup
+
+```js
+import EventEmitter from "node:events";
+
+const event = new EventEmitter();
+
+const handleJump = function () {
+  console.log("Handler of jump");
+};
+```
+
+---
+
+### 🔹 `.on()` — Listen Every Time
+
+`event.on(eventName, handler)` creates a listener that runs **every single time** the event is emitted — it stays active and doesn't get removed after use.
+
+```js
+event.on("jump", handleJump);
+event.on("jump", () => console.log("I am the second handler for jump"));
+```
+
+> 💡 We can attach **multiple handlers** to the same event — all of them will run whenever that event fires.
+
+---
+
+### 🔹 `.once()` — Listen Only One Time
+
+`event.once(eventName, handler)` also creates a listener, but it only runs **once**. After it fires a single time, it's automatically **removed from memory**.
+
+```js
+event.once("electricity", () => {
+  console.warn("Would not touch cable");
+});
+```
+
+---
+
+### 🔹 `.emit()` — Trigger the Event
+
+`event.emit(eventName, ...args)` is how we **manually fire** an event, running all its attached listeners.
+
+```js
+event.emit("jump", "electricity");
+```
+
+---
+
+### 🔹 `.off()` — Remove a Listener
+
+`event.off(eventName, handler)` removes a **specific handler** from an event. If there are multiple handlers attached to the same event, only the **matching one** gets removed — the others stay active.
+
+```js
+event.off("jump", handleJump);
+```
+
+---
+
+### 🆚 Quick Reference
+
+| Method                  | Purpose                    | Runs how many times?            |
+| ----------------------- | -------------------------- | ------------------------------- |
+| `.on(event, handler)`   | Add a listener             | ♾️ Every time the event fires   |
+| `.once(event, handler)` | Add a one-time listener    | 1️⃣ Only once, then auto-removed |
+| `.emit(event, ...args)` | Trigger the event          | Fires all attached listeners    |
+| `.off(event, handler)`  | Remove a specific listener | Removes just that one handler   |
