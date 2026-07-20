@@ -1682,3 +1682,157 @@ event.off("jump", handleJump);
 | `.once(event, handler)` | Add a one-time listener    | 1️⃣ Only once, then auto-removed |
 | `.emit(event, ...args)` | Trigger the event          | Fires all attached listeners    |
 | `.off(event, handler)`  | Remove a specific listener | Removes just that one handler   |
+
+## 🌊 Streams
+
+### 🤔 First — Why Do Streams Even Exist?
+
+Imagine you want to read a file that is **100GB** in size. Normally, to read a file, you'd think: "just load the whole file into memory (RAM), then use it." But here's the problem — **RAM is limited**. A normal computer might have 8GB, 16GB, or maybe 32GB of RAM. There is **no way** to fit a 100GB file into that.
+
+Even if the file was smaller — say 2GB — loading the **entire file at once** into memory is wasteful and slow. It blocks other things from happening, and it uses up a huge chunk of memory just for one operation.
+
+So the question becomes: **how do we read/write large amounts of data without needing large amounts of memory?**
+
+The answer is: **don't load it all at once. Load it little by little, use that little piece, then throw it away, and load the next little piece.**
+
+That's exactly what a **Stream** does.
+
+---
+
+### 📦 What Exactly Is a Stream?
+
+A Stream is simply a **connection between two points** — let's call them **Point A** (source) and **Point B** (destination). Once this connection is set up, data doesn't move all at once. Instead, it moves in **small chunks**, one after another, until everything has been transferred.
+
+Because only a **small chunk** is in memory at any given moment (not the whole file), the memory usage stays **low and manageable** — no matter how huge the total file is.
+
+---
+
+### 🚛 A Real-Life Example to Understand It
+
+Imagine a truck carrying **1 ton of sand**, and you need to move all of it from the truck onto the ground.
+
+You obviously **can't** lift 1 ton of sand in one go — that's physically impossible for a person.
+
+So what do you do instead? You take a **small bag**, fill it with a small amount of sand, carry it to the ground, empty it, then go back for another bag. You repeat this process **again and again** — bag after bag — until eventually, **all 1 ton of sand** has been moved.
+
+It takes some time because you're doing it in small batches, but at no point are you ever overloaded — you're only ever carrying **one small, manageable bag** at a time.
+
+This is **exactly** how a Stream works with data:
+
+- The "truck" = the data source (a file, network, etc.)
+- The "ground" = the destination (memory, another file, a server, etc.)
+- The "sand bag" = a small chunk of data (a buffer)
+- "Carrying bag after bag" = the Stream transferring chunk after chunk
+
+---
+
+### 🔹 Types of Streams
+
+There are **4 types** of streams, and each one describes a different **direction** or **behavior** of data movement.
+
+---
+
+#### 1️⃣ Readable Streams — Data flows INTO memory
+
+A Readable Stream takes data from some source (like a file on disk, or data from a network) and brings it **into memory**, one chunk at a time — **without permanently storing the whole thing**.
+
+> 📺 **Example:** When you watch a YouTube video, the video isn't fully downloaded onto your hard drive first. Instead, small chunks of the video are continuously streamed into memory, played, and then discarded — that's why you can start watching almost immediately, without waiting for the entire video to download.
+
+---
+
+#### 2️⃣ Writable Streams — Data flows OUT of memory to a destination
+
+A Writable Stream does the opposite — it takes data (from memory) and sends it **out to some destination**. Memory is only used **temporarily** to hold the current chunk being sent — it's not the final resting place of the data.
+
+> 📤 **Example:** When you upload a video to a social media app, your device reads the video in small chunks and **sends** each chunk to the server. The data moves from **Point A (your device)** to **Point B (the server)** gradually — this is a Writable Stream in action.
+
+---
+
+#### 3️⃣ Duplex Streams — Reading AND Writing happens together, in real time
+
+A Duplex Stream can do **both jobs at once** — reading and writing — simultaneously, without needing to fully finish one before starting the other.
+
+> 📞 **Example:** Think about a voice call. While you're talking, you're **sending** your voice (writing), and at the very same time, you're **hearing** the other person (reading). Nothing is being saved anywhere — the data just flows both ways, live, back and forth, continuously.
+
+---
+
+#### 4️⃣ Transform Streams — Data changes shape while it moves
+
+A Transform Stream is a Duplex Stream with a twist — it doesn't just pass data through unchanged, it **converts the data into a different format** as it flows from source to destination.
+
+> 🔄 **Example:** Imagine you have a JavaScript object in your program, but you want to send it somewhere as **JSON text**. A Transform Stream can take the object, **convert it into a JSON string** _while it's being transferred_, so by the time it reaches the destination, it's already in the correct format.
+
+---
+
+### 🆚 Quick Comparison
+
+| Stream Type   | What it does                        | Direction                        | Real-life analogy           |
+| ------------- | ----------------------------------- | -------------------------------- | --------------------------- |
+| **Readable**  | Brings data INTO memory             | Source → Memory                  | Watching a YouTube video    |
+| **Writable**  | Sends data OUT from memory          | Memory → Destination             | Uploading a video           |
+| **Duplex**    | Reads and writes at the same time   | Both directions, live            | A voice call                |
+| **Transform** | Reads, converts format, then writes | Both directions, with conversion | Object → JSON while sending |
+
+---
+
+### 💻 Using Streams in Node.js
+
+Node's built-in `fs` (file system) module lets us create streams easily using **callbacks** — this is the simplest, most beginner-friendly way to use streams.
+
+```js
+import fs from "node:fs";
+
+const stream = fs.createReadStream("filepath", { highWaterMark: /* bytes */ });
+```
+
+Let's break this line down carefully:
+
+- `fs.createReadStream(...)` → creates a **Readable Stream** — meaning it's set up to read data from a file, chunk by chunk.
+- `"filepath"` → the location of the file we want to read from.
+- `highWaterMark` → this option controls **how big each chunk should be** (in bytes). Think of it as: "how much sand fits in one bag before we carry it." A smaller `highWaterMark` means smaller, more frequent chunks; a larger one means bigger, less frequent chunks.
+
+---
+
+### 🔧 Streams Work Using Event Driven Architecture
+
+Remember earlier we learned about **Event Emitters, Listeners, and Handlers**? Streams use exactly this pattern to tell us what's happening as data flows through them.
+
+```js
+stream.on("data", (chunk) => {
+  console.log(chunk);
+});
+```
+
+**What's happening here, step by step:**
+
+1. The stream starts reading the file.
+2. As soon as **one chunk** (a small piece of the file, i.e., a buffer) has been read into memory, the stream **emits** a `"data"` event.
+3. Our `.on("data", ...)` listener catches that event and runs the handler — in this case, just logging the chunk.
+4. This process **repeats automatically** for every new chunk that gets read — the `"data"` event keeps firing again and again until the whole file has been read.
+
+```js
+stream.on("end", () => {
+  console.log("The end of buffer");
+});
+```
+
+**What's happening here:**
+
+1. Once **every single chunk** of the file has been read and transferred (from Point A, the file, to Point B, our memory/handler), there's nothing left to send.
+2. At that point, the stream emits a special `"end"` event — signaling: _"I'm done, there's no more data coming."_
+3. Our `.on("end", ...)` listener catches this and runs whatever code we want to run once the transfer is fully complete.
+
+---
+
+### 🎯 Quick Reference: Stream Events
+
+| Event    | When it fires                             | What it tells you                             |
+| -------- | ----------------------------------------- | --------------------------------------------- |
+| `"data"` | Every time a new chunk arrives            | "Here's a piece of your data — handle it now" |
+| `"end"`  | Once, after all data has been transferred | "I'm finished — no more chunks are coming"    |
+
+---
+
+### 🎯 The Big Picture Takeaway
+
+Streams solve a very real problem: **you cannot always fit an entire piece of data into memory at once**, especially with large files or continuous data (like a video call or a huge file transfer). Instead of trying to load everything at once, a Stream breaks the data into **small, manageable chunks**, moves them **one at a time** from source to destination, and uses **events** (`"data"`, `"end"`, etc.) to let your code know exactly what's happening at each step — all while keeping memory usage low and the whole process efficient.
