@@ -1836,3 +1836,118 @@ stream.on("end", () => {
 ### 🎯 The Big Picture Takeaway
 
 Streams solve a very real problem: **you cannot always fit an entire piece of data into memory at once**, especially with large files or continuous data (like a video call or a huge file transfer). Instead of trying to load everything at once, a Stream breaks the data into **small, manageable chunks**, moves them **one at a time** from source to destination, and uses **events** (`"data"`, `"end"`, etc.) to let your code know exactly what's happening at each step — all while keeping memory usage low and the whole process efficient.
+
+## 🚦 Status of a Stream
+
+While a stream is running, you often need to know **what state it's currently in** — is it flowing, paused, ended, or resumed? Node gives us **methods, properties, and event listeners** to check this at every stage.
+
+---
+
+### 1️⃣ `readableFlowing` — Is Data Currently Flowing?
+
+This property tells us whether the stream is **actively sending chunks** from Point A into memory right now.
+
+```js
+readStream.readableFlowing;
+```
+
+It can be in **3 possible states**:
+
+| Value   | Meaning                                                                              |
+| ------- | ------------------------------------------------------------------------------------ |
+| `null`  | The data flow **hasn't started yet** — no listener has been attached to consume data |
+| `false` | The stream is **paused** — data is not currently flowing                             |
+| `true`  | The stream is **flowing/resumed** — data is actively moving                          |
+
+> 💡 **Simple way to remember:** `null` = "not started," `false` = "on hold," `true` = "actively running."
+
+---
+
+### 2️⃣ Checking If a Stream Has Ended
+
+Once every chunk has been transferred and there's nothing left to read, the stream is considered **ended**. There are **two ways** to check this:
+
+**Option 1 — Using a property:**
+
+```js
+streamReader.readableEnded;
+// returns true once the stream has completely finished
+```
+
+**Option 2 — Using an event listener:**
+
+```js
+streamReader.on("end", () => {
+  console.log("Stream has ended");
+});
+// this event fires automatically the moment the stream finishes
+```
+
+---
+
+### 3️⃣ Checking If a Stream Is Paused
+
+If a stream is **paused**, it means data has temporarily **stopped flowing**, even though the stream isn't finished yet. We can check this using a method or an event listener:
+
+**Option 1 — Using a method:**
+
+```js
+streamReader.isPaused();
+// returns true if the stream is currently paused
+```
+
+**Option 2 — Using an event listener:**
+
+```js
+streamReader.on("pause", () => {
+  console.log("Stream has been paused");
+});
+// fires the moment the stream gets paused
+```
+
+---
+
+### 4️⃣ Checking If a Stream Has Resumed
+
+When a paused stream **starts flowing again**, Node emits a `"resume"` event to let us know:
+
+```js
+streamReader.on("resume", () => {
+  console.log("Stream has resumed");
+});
+```
+
+---
+
+### 🔧 Controlling the Stream: Pause & Resume
+
+Besides just _checking_ the stream's status, we can also **control it directly** using these two methods:
+
+```js
+streamReader.pause();
+// stops the stream from sending more chunks from Point A to memory (temporarily halts the flow)
+
+streamReader.resume();
+// starts sending chunks again — continues the flow from where it left off
+```
+
+> 💡 **Real-world use case:** Pausing is useful when the destination (e.g., memory or a slow network connection) can't keep up with incoming data — you pause the stream, let things catch up, then resume once ready. This prevents overwhelming the receiving end.
+
+---
+
+### 🆚 Quick Reference Table
+
+| Status            | Property/Method to check                      | Event to listen for  |
+| ----------------- | --------------------------------------------- | -------------------- |
+| Is data flowing?  | `readableFlowing` (`null` / `false` / `true`) | —                    |
+| Has it ended?     | `readableEnded`                               | `.on("end", ...)`    |
+| Is it paused?     | `isPaused()`                                  | `.on("pause", ...)`  |
+| Has it resumed?   | —                                             | `.on("resume", ...)` |
+| Pause the stream  | `.pause()`                                    | —                    |
+| Resume the stream | `.resume()`                                   | —                    |
+
+---
+
+### 🎯 Takeaway
+
+A stream isn't just a one-way, uncontrollable pipe of data — it has a **clear lifecycle** (not started → flowing → paused → resumed → ended), and Node gives us both **properties/methods** (to check the current state at any moment) and **event listeners** (to react automatically the instant the state changes). Together, these let you build reliable, controlled data pipelines instead of blindly hoping everything transfers correctly.
