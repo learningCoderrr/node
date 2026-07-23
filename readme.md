@@ -1951,3 +1951,71 @@ streamReader.resume();
 ### 🎯 Takeaway
 
 A stream isn't just a one-way, uncontrollable pipe of data — it has a **clear lifecycle** (not started → flowing → paused → resumed → ended), and Node gives us both **properties/methods** (to check the current state at any moment) and **event listeners** (to react automatically the instant the state changes). Together, these let you build reliable, controlled data pipelines instead of blindly hoping everything transfers correctly.
+
+## 📄 More Methods & Properties of Readable Streams
+
+```js
+import fs from "node:fs";
+
+const readStream = fs.createReadStream("read.txt", {
+  highWaterMark: 100,
+});
+// 👆 this starts opening the file and preparing it for reading in chunks
+
+readStream.on("open", () => {
+  console.log("File has been opened");
+});
+// fires once — the moment the file is successfully opened, before any data starts flowing
+
+readStream.on("data", (chunk) => {
+  console.log("Run one time");
+  readStream.destroy(new Error("we stopped for some error"));
+  // 👆 this stops the stream immediately and permanently — it cannot be resumed after this
+  // this Error is what gets passed to the "error" event listener below
+});
+
+readStream.on("error", (err) => {
+  console.log(err);
+});
+// fires whenever the stream encounters any error — including the one we manually
+// triggered above using destroy()
+
+readStream.on("close", () => {
+  console.log("Stream has been closed");
+});
+// fires once the underlying file has been fully closed —
+// this happens after the stream ends OR after it's destroyed
+```
+
+---
+
+### 🔍 Breaking Down Each Event
+
+**1️⃣ `"open"` Event**
+Fires **once**, right when the file is successfully opened — before any actual data reading begins. Useful if you want to confirm the file exists and is accessible.
+
+**2️⃣ `"data"` Event**
+Fires every time a new chunk is read into memory. In this example, the moment we get the **first chunk**, we intentionally call `.destroy()` to stop the stream — this is why the log only shows `"Run one time"` once, even though normally `"data"` would fire repeatedly for every chunk.
+
+**3️⃣ `.destroy(error?)` Method**
+This **immediately and permanently stops** the stream. Unlike `.pause()` (which can be resumed later with `.resume()`), `destroy()` completely shuts the stream down — there's no going back. You can optionally pass an `Error` object into it, which then gets forwarded to the `"error"` event listener.
+
+**4️⃣ `"error"` Event**
+Fires whenever something goes wrong with the stream — whether it's a real system error (like a missing file) or a manual error we trigger ourselves (like in this example, using `.destroy()`).
+
+**5️⃣ `"close"` Event**
+Fires once the file has been **fully closed** at the system level. This happens after the stream either finishes normally (`"end"`) or is forcefully stopped (`.destroy()`).
+
+---
+
+### 🆚 Quick Reference
+
+| Event/Method     | Fires When                        | Notes                                      |
+| ---------------- | --------------------------------- | ------------------------------------------ |
+| `"open"`         | File is successfully opened       | Fires once, before data starts flowing     |
+| `"data"`         | A new chunk is read               | Fires repeatedly, once per chunk           |
+| `.destroy(err?)` | You manually call it              | Immediately & permanently stops the stream |
+| `"error"`        | Any error occurs (manual or real) | Receives the error object                  |
+| `"close"`        | File is fully closed              | Happens after stream ends or is destroyed  |
+
+> 💡 **Takeaway:** `.destroy()` is different from `.pause()` — pausing is temporary and can be resumed, but destroying a stream is **final**. Once destroyed, the `"error"` event (if an error was passed) and then the `"close"` event will fire, and no more data will ever come from that stream.
