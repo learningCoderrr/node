@@ -2019,3 +2019,170 @@ Fires once the file has been **fully closed** at the system level. This happens 
 | `"close"`        | File is fully closed              | Happens after stream ends or is destroyed  |
 
 > 💡 **Takeaway:** `.destroy()` is different from `.pause()` — pausing is temporary and can be resumed, but destroying a stream is **final**. Once destroyed, the `"error"` event (if an error was passed) and then the `"close"` event will fire, and no more data will ever come from that stream.
+
+## ✍️ Write Stream
+
+### 🤔 What Is a Write Stream?
+
+A **Write Stream** is a tool that lets us send data (in small pieces, called buffers/chunks) from our program into somewhere else — most commonly, into a file. Instead of writing one giant piece of data all at once, it writes little by little, piece by piece.
+
+---
+
+### 🔧 Creating a Write Stream
+
+```js
+import fs from "node:fs";
+
+const writeStream = fs.createWriteStream("filePath.txt", {
+  highWaterMark: 1000 * 1024, // this sets a memory limit, explained in detail below
+});
+```
+
+Here, `fs.createWriteStream(...)` sets up a stream that's ready to write data into `"filePath.txt"`. The second argument is an options object, and `highWaterMark` is one of its settings — we'll come back to exactly what this does a bit later.
+
+---
+
+### 📝 Writing Data — The `.write()` Method
+
+To actually put data into the file, we use the `.write()` method.
+
+```js
+writeStream.write("hello");
+```
+
+- If the file `"filePath.txt"` **doesn't exist yet**, it gets **created**, and `"hello"` is written into it.
+- If the file **already existed** with some old content in it, this first `.write()` call **replaces/overwrites** that old content with `"hello"`.
+
+Now, if we call `.write()` again on the **same stream**:
+
+```js
+writeStream.write("Bolo");
+```
+
+This does **NOT** overwrite the file again. Instead, it simply **adds** `"Bolo"` right after whatever was already written. So the file now contains `"helloBolo"`.
+
+> 💡 **Simple rule to remember:** The overwrite behavior only happens the very first time a stream starts writing to a file. Every call after that just keeps **appending** more content, one write at a time.
+
+---
+
+### 🌊 Now, the Real Problem: What Happens When Data Comes In Too Fast?
+
+Let's say we're reading data from one place (using a Read Stream) and writing it somewhere else (using a Write Stream) — a very common pattern, for example, copying a large file from one location to another.
+
+Here's the important part to understand clearly:
+
+**If data is arriving too fast, the Write Stream doesn't actually write it out to the final destination right away.** Instead, it just **allocates memory** to hold onto the incoming data, piece by piece, as it keeps arriving.
+
+So then, when does it actually write?
+
+Once the **incoming side** (the Read Stream sending the data) **stops or pauses**, that's when the Write Stream finally gets a chance to **write out everything it was holding** — and finishes the job.
+
+Here's the scenario:
+
+1. A Read Stream is reading data very quickly and constantly sending chunks to the Write Stream.
+2. As long as data keeps arriving without a pause, the Write Stream keeps **allocating memory** to hold each new chunk — rather than writing it out immediately.
+3. If the Read Stream keeps sending data non-stop, without ever pausing, the Write Stream keeps allocating **more and more memory** to hold all this backlog of unwritten data.
+4. Over time, if this keeps happening endlessly, the memory being used just to **hold waiting data** can grow larger and larger — becoming a real problem for the system's memory usage.
+5. Only once the Read Stream pauses (or stops sending) does the Write Stream get the opportunity to actually **write out the data it was holding** to the final destination, and clear that memory.
+
+So to summarize simply: **the incoming data just sits in memory, waiting**, and the actual writing happens once there's a pause in the incoming flow — that's exactly what can cause memory to grow out of control if incoming data keeps arriving non-stop.
+
+---
+
+### 🚦 The Solution: Backpressure
+
+To prevent this memory problem, Node.js has a built-in mechanism called **backpressure**.
+
+Here's exactly how it works:
+
+When data is coming in **too fast**, the Write Stream **doesn't actually write it out yet**. Instead, it just keeps **allocating memory** to hold onto this incoming data — piece after piece — while it waits for a good moment to write.
+
+Once the incoming side (the Read Stream) **stops or pauses** sending new data, that's when the Write Stream finally gets the chance to **write out everything it was holding**, and finishes the job.
+
+So the actual writing to the final destination doesn't happen continuously while data is rushing in — it happens once things slow down or pause, giving the Write Stream room to catch up.
+
+Every single time you call `.write(data)`, it also **returns a value** back to you — a **boolean** (`true` or `false`) — telling you the current status of the Write Stream's internal memory usage.
+
+| What `.write()` returns | What it means                                                                                                                                                                                                                                                         |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `true`                  | Everything is fine. The amount of data currently held in memory (waiting to be written) is still **within the allowed limit**. You can safely keep sending more data.                                                                                                 |
+| `false`                 | Too much data is now sitting in memory. The amount being held has now **crossed the limit** set by `highWaterMark`. This is a warning sign telling you: _"Please stop sending more data for now — I have too much waiting already, and I need time to write it out."_ |
+
+This is exactly where `highWaterMark` comes into play — it's simply the **threshold number** (in bytes) that defines "how much unwritten data is okay to have waiting in memory before we consider it too much."
+
+**Example to make this concrete:**
+
+```text
+highWaterMark = 1 MB   (the limit we set)
+```
+
+If the amount of data currently sitting in memory, waiting to be written, goes **above 1 MB**, then the next time you call `.write()`, it will return `false` — signaling that the limit has been crossed.
+
+---
+
+### 🔹 What Do We Do When We Get `false`?
+
+When `.write()` returns `false`, the correct thing to do is to **pause** whatever is sending us the data — usually, this means pausing the Read Stream that's feeding data into our Write Stream.
+
+```js
+const canContinue = writeStream.write(chunk);
+
+if (!canContinue) {
+  readStream.pause();
+  // this tells the Read Stream: "stop sending more chunks for now"
+}
+```
+
+By pausing the Read Stream, we stop **more** data from piling up in memory, giving the Write Stream a chance to catch up and actually write out the backlog it's already holding.
+
+---
+
+### 🔹 The `"drain"` Event — "Okay, You Can Continue Now"
+
+While the Read Stream is paused, the Write Stream keeps doing its job in the background — writing whatever data it's holding out to the final destination (like the disk), bit by bit, at its own natural speed.
+
+Eventually, once the Write Stream has successfully written out **enough** of that backlog — bringing the amount of unwritten data back down to a safe level — it emits a special event called `"drain"`.
+
+Think of `"drain"` as the Write Stream saying: _"Okay, I've cleared out enough space now. You can go ahead and send me more data again."_
+
+```js
+writeStream.on("drain", () => {
+  readStream.resume();
+  // this tells the Read Stream: "you can start sending data again"
+});
+```
+
+So the full cycle looks like this:
+
+```text
+1. Read Stream sends data → Write Stream tries to write it
+2. If data comes in faster than it can be written → memory usage grows
+3. .write() returns false when it crosses the highWaterMark limit
+4. We pause the Read Stream (stop new data from coming in)
+5. Write Stream keeps writing its backlog to the final destination in the background
+6. Once enough backlog is cleared → Write Stream emits "drain"
+7. We resume the Read Stream → cycle continues
+```
+
+This back-and-forth (pause when `false`, resume on `"drain"`) is what keeps memory usage under control, no matter how large the total amount of data being transferred is.
+
+---
+
+### 🆚 Quick Reference Table
+
+| Concept                           | What it means, in simple words                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| `.write(data)` (1st time)         | Creates the file (if it doesn't exist) or replaces its old content                   |
+| `.write(data)` (every time after) | Adds (appends) more content to the file                                              |
+| `highWaterMark`                   | The memory limit — how much unwritten data is allowed to wait before it's "too much" |
+| `.write()` returns `true`         | Safe to keep sending more data                                                       |
+| `.write()` returns `false`        | Too much data waiting — pause the data source                                        |
+| `"drain"` event                   | Fires once the backlog has been written out enough — safe to resume sending data     |
+
+---
+
+### 🎯 The Big Picture Takeaway
+
+When data arrives too fast, the Write Stream doesn't write it out right away — it just **holds it in memory**, allocating more and more space as more data keeps coming in. It only gets the chance to actually **write everything out** once the incoming side pauses or stops sending data.
+
+Backpressure solves the memory-growth risk this creates. `.write()` returns `false` as a warning the moment memory usage crosses the `highWaterMark` limit — this is our cue to **pause** the source sending us data, giving the Write Stream room to catch up and actually write out its backlog. Once it has, it fires the `"drain"` event — our cue to **resume** sending data again. This simple pause-and-resume cycle is what keeps memory usage safe and predictable, no matter how much total data is being moved.
