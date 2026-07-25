@@ -2186,3 +2186,44 @@ This back-and-forth (pause when `false`, resume on `"drain"`) is what keeps memo
 When data arrives too fast, the Write Stream doesn't write it out right away — it just **holds it in memory**, allocating more and more space as more data keeps coming in. It only gets the chance to actually **write everything out** once the incoming side pauses or stops sending data.
 
 Backpressure solves the memory-growth risk this creates. `.write()` returns `false` as a warning the moment memory usage crosses the `highWaterMark` limit — this is our cue to **pause** the source sending us data, giving the Write Stream room to catch up and actually write out its backlog. Once it has, it fires the `"drain"` event — our cue to **resume** sending data again. This simple pause-and-resume cycle is what keeps memory usage safe and predictable, no matter how much total data is being moved.
+
+## 🔚 Ending the Writable Stream
+
+Unlike a Readable Stream (which automatically closes once all data has been read), a **Writable Stream doesn't close on its own**. We have to **explicitly tell it to close** once we're done writing.
+
+---
+
+### 🔧 The `.end()` Method
+
+We use the `.end()` method to close a Write Stream.
+
+```js
+import fs from "node:fs";
+
+const writeStream = fs.createWriteStream("file.txt", { highWaterMark: 6 });
+
+writeStream.end("My last data");
+```
+
+Here's what `.end()` actually does:
+
+1. **Optionally writes one last piece of data.** If you pass an argument (like `"My last data"` above), that value gets written to the file **first**, just like a normal `.write()` call.
+2. **Closes the stream.** Once that final data is written, the stream is marked as **finished** — no more `.write()` calls are allowed after this.
+3. **Releases memory.** Since the stream is done, Node frees up the resources it was using to keep the stream open.
+
+---
+
+### 🆚 Quick Reference
+
+| Method         | What it does                                                              |
+| -------------- | ------------------------------------------------------------------------- |
+| `.write(data)` | Writes a chunk, keeps the stream open for more writes                     |
+| `.end(data?)`  | Optionally writes one final chunk, then **closes** the stream permanently |
+
+> ⚠️ **Important:** Once `.end()` is called, calling `.write()` again on that same stream will throw an error — the stream is considered fully done.
+
+---
+
+### 🎯 Takeaway
+
+Readable Streams end automatically once they run out of data to read — but Writable Streams **don't know on their own** when you're finished writing. That's why we must explicitly call `.end()` to signal: _"I'm done writing, close this stream and free up its resources."_ You can also use `.end()` as a shortcut to write one last piece of data right before closing.
