@@ -2213,12 +2213,27 @@ Here's what `.end()` actually does:
 
 ---
 
+### 🏁 The `"finish"` Event
+
+When we call `.end()`, it doesn't necessarily mean the file has **fully finished writing** at that exact instant — there might still be some buffered data left to actually get written out to the disk.
+
+Once **all the data has been completely written out** to the file (fully finished, nothing left pending), the stream emits a `"finish"` event.
+
+```js
+writeStream.on("finish", () => {
+  console.log("All data has been fully written to the file");
+});
+```
+
+---
+
 ### 🆚 Quick Reference
 
-| Method         | What it does                                                              |
-| -------------- | ------------------------------------------------------------------------- |
-| `.write(data)` | Writes a chunk, keeps the stream open for more writes                     |
-| `.end(data?)`  | Optionally writes one final chunk, then **closes** the stream permanently |
+| Method/Event     | What it does                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `.write(data)`   | Writes a chunk, keeps the stream open for more writes                                                  |
+| `.end(data?)`    | Optionally writes one final chunk, then **closes** the stream permanently                              |
+| `"finish"` event | Fires once **all data has been fully written** to the destination — confirms writing is truly complete |
 
 > ⚠️ **Important:** Once `.end()` is called, calling `.write()` again on that same stream will throw an error — the stream is considered fully done.
 
@@ -2226,4 +2241,12 @@ Here's what `.end()` actually does:
 
 ### 🎯 Takeaway
 
-Readable Streams end automatically once they run out of data to read — but Writable Streams **don't know on their own** when you're finished writing. That's why we must explicitly call `.end()` to signal: _"I'm done writing, close this stream and free up its resources."_ You can also use `.end()` as a shortcut to write one last piece of data right before closing.
+Readable Streams end automatically once they run out of data to read — but Writable Streams **don't know on their own** when you're finished writing. That's why we must explicitly call `.end()` to signal: _"I'm done writing, close this stream and free up its resources."_ You can also use `.end()` as a shortcut to write one last piece of data right before closing. And to confirm that the data has **actually fully finished being written** (not just that `.end()` was called), we listen for the `"finish"` event.
+
+## States of Writable Streams
+
+1. `writable` => Property shows boolean value whether the writeStream is available to write or not
+2. `writableEnded` => Property shows the boolean value whether `.end()` has already been called on the writeStream (so it's no longer eligible to write)
+3. `writableFinished` => Property shows the boolean value whether the stream has completed writing all data and finished . This becomes `true` right around when the `"finish"` event fires.
+4. `destroyed` => Property shows `true` if the stream is destroyed, otherwise `false`
+5. `.destroy()` => This method destroys and closes the stream immediately, and can optionally take an error as an argument, which then gets passed to the `"error"` event
