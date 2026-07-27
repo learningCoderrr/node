@@ -2250,3 +2250,77 @@ Readable Streams end automatically once they run out of data to read — but Wri
 3. `writableFinished` => Property shows the boolean value whether the stream has completed writing all data and finished . This becomes `true` right around when the `"finish"` event fires.
 4. `destroyed` => Property shows `true` if the stream is destroyed, otherwise `false`
 5. `.destroy()` => This method destroys and closes the stream immediately, and can optionally take an error as an argument, which then gets passed to the `"error"` event
+
+## 🔗 Pipe and Unpipe
+
+Earlier, we manually handled backpressure ourselves — checking `.write()`'s return value, calling `.pause()`, and listening for `"drain"` to `.resume()`. That's a lot of manual code just to move data safely from a Readable Stream to a Writable Stream.
+
+The `.pipe()` method does **all of that for us automatically** — it connects a Readable Stream directly to a Writable Stream, and internally handles pausing/resuming and backpressure/drain, without us having to write any of that logic ourselves.
+
+---
+
+### 🔧 `.pipe()` — Connecting Streams
+
+```js
+readStream.pipe(writeStream);
+```
+
+This single line does what we previously did manually with `.write()`, checking `false`, `.pause()`, and `"drain"` — all wrapped into one simple call.
+
+> 💡 **In short:** `.pipe()` takes data as it's read from the Readable Stream and automatically writes it into the Writable Stream, pausing and resuming the flow behind the scenes whenever needed to respect backpressure.
+
+---
+
+### 🔧 `.unpipe()` — Disconnecting Streams
+
+If we want to **stop** the piping — meaning stop sending data from the Readable Stream into the Writable Stream — we use `.unpipe()`.
+
+```js
+setTimeout(
+  () => {
+    readStream.unpipe(writeStream);
+  } /* delay in ms */,
+);
+```
+
+This disconnects the two streams, so data from `readStream` will **no longer** be automatically sent into `writeStream` after this point.
+
+> ⚠️ **Note:** The correct method name is `setTimeout` (not `setTimeOut`) — JavaScript's timer function.
+
+---
+
+### ⚠️ Important: Always Handle the `"error"` Event
+
+If something goes wrong while piping — for example, the source file doesn't exist, or there's a disk/network issue — and there's **no `"error"` listener attached**, Node will **crash the entire application**.
+
+This is because unhandled errors on streams don't just fail silently — they get thrown, and if nothing is listening to catch that error, the whole process stops.
+
+To prevent this, we should always attach an `"error"` event listener to our streams:
+
+```js
+readStream.on("error", (err) => {
+  console.log("Something went wrong:", err);
+});
+
+writeStream.on("error", (err) => {
+  console.log("Something went wrong:", err);
+});
+```
+
+> 💡 This is especially important when using `.pipe()`, since we're not manually controlling every step — we still need to make sure any errors from either stream are caught, so our app doesn't crash unexpectedly.
+
+---
+
+### 🆚 Quick Reference
+
+| Method/Event                     | What it does                                                                                        |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `readStream.pipe(writeStream)`   | Connects the two streams — automatically handles data transfer, pausing, resuming, and backpressure |
+| `readStream.unpipe(writeStream)` | Disconnects the two streams — stops the automatic data transfer                                     |
+| `"error"` event                  | Must be listened to — otherwise an error will **crash the application**                             |
+
+---
+
+### 🎯 Takeaway
+
+`.pipe()` exists to save us from writing repetitive backpressure-handling code every time we want to move data from a Readable Stream to a Writable Stream. Instead of manually checking `.write()`'s return value and juggling `.pause()`/`.resume()`/`"drain"` ourselves, `.pipe()` handles all of that internally — making it the simplest and most common way to connect streams in Node.js. But since `.pipe()` handles things automatically, we must still remember to attach `"error"` listeners ourselves — otherwise, any stream error will crash our entire application.
