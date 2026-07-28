@@ -2511,3 +2511,106 @@ So `stdin`, `stdout`, and `stderr` never work alone. They always connect a **wri
 ```
 Program A  --writes-->  [ stream / buffer ]  --reads-->  Program B
 ```
+
+## 🔗 Piping Between Two Processes (Unix, WSL, Linux, Mac)
+
+**Piping** is a way to connect **two separate processes** so that the output of one becomes the input of the other. This is made possible with the help of the **Linux terminal (shell)** and the **Linux kernel**, which manages the actual data transfer between processes behind the scenes.
+
+---
+
+### 🔧 How Piping Works
+
+If we want to send data **from one process to another**, we use the pipe symbol: `|`
+
+Here's the core idea:
+
+- The **first process** sends out data through its `stdout` (standard output) stream.
+- The **second process** receives that data through its `stdin` (standard input) stream.
+
+```bash
+node script.js | node app.js
+```
+
+**What's happening here:**
+
+1. `node script.js` runs and produces some output — whatever it sends via `stdout`.
+2. Instead of that output going to the terminal screen (as it normally would), the shell **redirects** it directly into the `stdin` of `node app.js`.
+3. `node app.js` can then read that incoming data through its own `process.stdin`.
+
+**Another example:**
+
+```bash
+echo "mohan g kaha ho" | node app.js
+```
+
+Here, the `echo` command's output (`"mohan g kaha ho"`) is sent through `stdout`, and piped directly into `node app.js`'s `stdin` — so `app.js` receives and can process that text.
+
+> 💡 **Simple way to remember:** Whatever a process would normally **print to the screen** (`stdout`), piping instead sends it **directly into another process's input** (`stdin`) — connecting them like a pipe carrying water from one container to another.
+
+---
+
+## 📄 Redirection (Unix, WSL, Linux, Mac)
+
+**Redirection** is similar to piping, but instead of connecting two _processes_ together, it connects a process's stream to a **file**.
+
+There are two directions redirection can go:
+
+1. Sending a process's `stdout` output **into a file** (instead of the screen).
+2. Reading a file's content and feeding it **into a process's `stdin`** (instead of typing it manually).
+
+---
+
+### 🔹 `>` — Overwrite Redirection
+
+```bash
+node throwValue.js > transfer.txt
+```
+
+**What this does:**
+
+- If `transfer.txt` **doesn't exist**, it gets **created**, and the `stdout` output from `throwValue.js` is written into it.
+- If `transfer.txt` **already exists** (with old content), this **overwrites** that old content completely with the new output.
+
+> 💡 **Comparison to Write Streams:** This behaves just like calling `.write()` for the **very first time** on a Write Stream — the first write replaces any existing content. Every write **after** that (using `>>`, explained next) just appends more, instead of overwriting again.
+
+---
+
+### 🔹 `>>` — Append Redirection
+
+```bash
+node append.js >> transfer.txt
+```
+
+**What this does:**
+
+- If `transfer.txt` **doesn't exist**, it gets **created** first.
+- If it **already has content** (from a previous run, or from `>`), this **appends** the new `stdout` output right after the existing content — without erasing anything that was already there.
+
+---
+
+### 🔹 `<` — Input Redirection
+
+```bash
+node get.js < transfer.txt
+```
+
+**What this does:**
+
+- Instead of typing input manually into the terminal for `get.js` to read, this takes the **entire content of `transfer.txt`** and feeds it directly into `get.js`'s `stdin` — as if someone had typed that file's content into the terminal for the program to read.
+
+---
+
+### 🆚 Quick Reference
+
+| Symbol | Name               | What it does                                                                                |
+| ------ | ------------------ | ------------------------------------------------------------------------------------------- |
+| `\|`   | Pipe               | Connects one process's `stdout` directly to another process's `stdin`                       |
+| `>`    | Overwrite redirect | Sends a process's `stdout` into a file — creates it if missing, **overwrites** if it exists |
+| `>>`   | Append redirect    | Sends a process's `stdout` into a file — creates it if missing, **appends** if it exists    |
+| `<`    | Input redirect     | Feeds a file's content into a process's `stdin`                                             |
+
+---
+
+### 🎯 Takeaway
+
+**Piping** (`|`) connects two running processes together — one's output becomes the other's input, without needing a file in between. **Redirection** (`>`, `>>`, `<`) instead connects a process's input/output to a **file** — either saving what a process outputs, or feeding a file's content in as if it were typed input. Both rely on the same underlying idea: `stdout` sends data out, and `stdin` receives data in — piping and redirection just decide **where that data goes to** or **comes from**.
