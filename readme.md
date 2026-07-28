@@ -2324,3 +2324,190 @@ writeStream.on("error", (err) => {
 ### 🎯 Takeaway
 
 `.pipe()` exists to save us from writing repetitive backpressure-handling code every time we want to move data from a Readable Stream to a Writable Stream. Instead of manually checking `.write()`'s return value and juggling `.pause()`/`.resume()`/`"drain"` ourselves, `.pipe()` handles all of that internally — making it the simplest and most common way to connect streams in Node.js. But since `.pipe()` handles things automatically, we must still remember to attach `"error"` listeners ourselves — otherwise, any stream error will crash our entire application.
+
+# Data Streams (OS) — stdin, stdout, stderr
+
+---
+
+## 1. What Is a Data Stream?
+
+When the operating system starts a program (a **process**), it gives that program **three open channels** to talk with the outside world. These channels are called **standard streams**.
+
+Think of a stream like a **pipe**. Data flows through it in one direction. The program does not need to know what is on the other side of the pipe — it could be your keyboard, your screen, a file, or even another program.
+
+| #   | Stream          | Short name | File Descriptor (fd) | Direction                                        | Usually connected to |
+| --- | --------------- | ---------- | -------------------- | ------------------------------------------------ | -------------------- |
+| 1   | Standard Input  | `stdin`    | `0`                  | Data comes **into** the program                  | Keyboard             |
+| 2   | Standard Output | `stdout`   | `1`                  | Data goes **out of** the program (normal output) | Terminal screen      |
+| 3   | Standard Error  | `stderr`   | `2`                  | Data goes **out of** the program (error output)  | Terminal screen      |
+
+### What is a file descriptor (fd)?
+
+A **file descriptor** is just a **number**. The OS uses this number to keep track of something that is open — it could be a real file, a keyboard, a screen, a pipe, or a network connection. In Unix-like systems (Linux, macOS), almost everything is treated like a "file" internally, even a keyboard or a screen.
+
+The numbers `0`, `1`, and `2` are **always reserved** for `stdin`, `stdout`, and `stderr`. They are set up automatically by the OS _before_ your program even starts running. You don't have to create them yourself.
+
+---
+
+## 2. How `stdin` Works in a Terminal (Step by Step)
+
+### The basic flow
+
+```
+Keyboard → OS (kernel) → Input Buffer → stdin → Program
+```
+
+When you press keys on your keyboard, the letters do **not** go straight into the running program. They first go into a small storage area inside the operating system called a **buffer**. This buffer belongs to a part of the OS called the **TTY driver** (TTY = "teletype," an old name that stuck around). This part of the OS handles keyboard input for terminals — showing your typed letters, letting you press Backspace, and deciding when to send the data to the program.
+
+### Example: typing "HELLO"
+
+Say you type the word `HELLO`. Before any program reads it, it just sits in the buffer like this:
+
+```
+-----------
+|H|E|L|L|O|
+-----------
+```
+
+- If **no program has read it yet**, it just stays there, waiting.
+- Once a program actually **reads** it (using a `read()` operation), those letters are taken out of the buffer. The space is now free and can be reused for the next thing you type.
+
+So the buffer is like a waiting room — data sits there until a program is ready to pick it up.
+
+### Echo mode — why you can see what you type
+
+You might think the _program_ you're running is the one showing your typed letters on screen. That's not true. It's actually the **terminal itself** doing this, through something called **echo mode**.
+
+- **Echo ON** (the normal setting): every key you press is instantly shown on the screen.
+- **Echo OFF**: keys are typed and sent to `stdin` as usual, but they are **not shown** on screen.
+
+A common example is typing your password for `sudo` or during an `ssh` login. The program tells the terminal to turn echo off, so even though you're really typing, nothing appears on the screen. Your keystrokes still go into the buffer and to `stdin` — you just can't see them.
+
+### Canonical mode vs raw mode — why pressing Enter matters
+
+This explains why a program usually only gets your text **after** you press Enter.
+
+| Mode                                                                | What happens                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Canonical mode** (also called "cooked mode") — the normal default | The OS holds your typed text **line by line** inside the buffer. Nothing is sent to the program until you press **Enter**. Pressing Enter tells the OS "this line is done, send it now." This also lets you use Backspace to fix mistakes before sending.                    |
+| **Raw mode** (also called "non-canonical mode")                     | Every single key press is sent to the program **immediately** — there is no waiting for Enter, and no line-by-line buffering. Programs like `vim`, text-based games, or password-typing screens switch the terminal into this mode so they can react to each key right away. |
+
+So in short: **canonical mode = wait for Enter, raw mode = react to every keystroke instantly.**
+
+---
+
+## 3. `stdin` Between Two Processes (Parent → Child)
+
+A running program can start another program. The one that starts it is called the **parent process**, and the new one is called the **child process**.
+
+When a parent creates a child process, the parent is given **control over the child's `stdin`**. This means the parent can send data directly into the child — without needing a keyboard at all.
+
+**Parent process — sending data into the child:**
+
+```js
+childProcess.stdin.write("Hello");
+```
+
+**Child process — receiving that data:**
+
+```js
+process.stdin.on("data", (chunks) => {
+  console.log(chunks);
+});
+```
+
+This is the exact same idea behind pipes in the terminal, like `command1 | command2`. The OS connects `command1`'s output straight into `command2`'s input. When you use Node's `child_process` module, you're just doing this same thing, but with code instead of the `|` symbol.
+
+---
+
+## 4. `stdout` — Sending Output From a Program to the Terminal
+
+`stdout` is how a program sends its **normal output** to whatever is listening on the other end. When you run a program directly in a terminal, the terminal itself is the one listening.
+
+```js
+import process from "node:process";
+process.stdout.write("Data from program");
+```
+
+**Step by step:**
+
+1. Your program (which is a **child process** of the terminal) writes data to `stdout`.
+2. The **terminal** (its parent process) reads that data.
+3. The terminal displays it on your screen.
+
+---
+
+## 5. `stdout` Between Two Processes (Child → Parent)
+
+If a child process writes something to its own `stdout`, it does **not** automatically show up on your screen. Instead, it goes to whoever is set up to read the child's `stdout` — usually the **parent process**.
+
+**Child process — writing data:**
+
+```js
+process.stdout.write("data send from child to parent");
+```
+
+**Parent process — reading the child's data:**
+
+```js
+childProcess.stdout.on("data", (chunks) => {
+  console.log(chunks.toString());
+});
+```
+
+Note: the parent must listen on `childProcess.stdout`, **not** on its own `process.stdin`. Its own `stdin` is only for things typed on the parent's keyboard — it has nothing to do with what the child wrote.
+
+If the child uses `console.log(...)` instead of `process.stdout.write(...)` directly, it still works the same way. That's because `console.log()` internally calls `process.stdout.write()` for you (and just adds a new line at the end). So no matter which one the child uses, the parent still catches it the same way, with `childProcess.stdout.on("data", ...)`.
+
+---
+
+## 6. `stderr` — The Error Channel
+
+`stderr` works the same way as `stdout` mechanically — a program writes to it, and a parent/terminal reads it. The only difference is **purpose**: `stderr` (fd `2`) is meant only for error messages and warnings, kept separate from normal output.
+
+```js
+process.stderr.write("Something went wrong");
+```
+
+### Why have a separate error stream at all? Why not just use stdout for everything?
+
+- **You can send them to different places.** In bash:
+
+  ```bash
+  node app.js > output.log 2> errors.log
+  ```
+
+  Normal messages go into `output.log`, and error messages go into `errors.log` — even though on screen they'd normally look mixed together.
+
+- **Pipes only carry stdout by default.** If you do `command1 | command2`, only `command1`'s normal output (`stdout`) gets piped into `command2`. Errors from `command1` still show up on your screen directly, so you don't miss them.
+
+- **stderr shows up faster.** `stderr` is usually sent immediately (not held in a buffer), while `stdout` can be delayed a little. This means if a program crashes, you still see the error message right away.
+
+---
+
+## 7. Buffering — Why Output Sometimes Seems Delayed
+
+A **buffer** is just a temporary holding area for data before it's actually sent or shown. Streams don't always send data the instant you write it — sometimes they wait and send a batch all at once. This is called **buffering**, and it works differently for each stream:
+
+| Stream   | How it usually buffers                                                                                                                                                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stdin`  | Holds data line by line until you press Enter (this is canonical mode, explained above)                                                                                                                                                                                               |
+| `stdout` | **Line-buffered** when connected to a terminal — sends data each time it sees a new line (`\n`). But when `stdout` is redirected into a file or another program, it becomes **block-buffered** — it waits until it has a bigger chunk of data (or the program ends) before sending it |
+| `stderr` | **Not buffered at all** — sent immediately, every time                                                                                                                                                                                                                                |
+
+This is why sometimes when you pipe a program's output into a file or another command, the output seems to show up in "bursts" instead of line by line. It's not lost — it's just sitting in a buffer, waiting to be flushed out.
+
+---
+
+## 8. Conclusion — Streams Are a Two-Way Relationship
+
+A stream only makes sense when you think of it as connecting **two sides**: one side writes, and the other side reads.
+
+- If Program A **reads** something from a stream, that data must have come from Program B **writing** it in first.
+- If Program A **writes** something into a stream, it's only useful once some other program (Program B) **reads** it out.
+
+So `stdin`, `stdout`, and `stderr` never work alone. They always connect a **writer** and a **reader** — whether that's a program and a keyboard, a program and a screen, or one program talking to another program.
+
+```
+Program A  --writes-->  [ stream / buffer ]  --reads-->  Program B
+```
