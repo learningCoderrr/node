@@ -2614,3 +2614,48 @@ node get.js < transfer.txt
 ### 🎯 Takeaway
 
 **Piping** (`|`) connects two running processes together — one's output becomes the other's input, without needing a file in between. **Redirection** (`>`, `>>`, `<`) instead connects a process's input/output to a **file** — either saving what a process outputs, or feeding a file's content in as if it were typed input. Both rely on the same underlying idea: `stdout` sends data out, and `stdin` receives data in — piping and redirection just decide **where that data goes to** or **comes from**.
+
+## 🔢 File Descriptor
+
+A **File Descriptor (fd)** is simply a **whole number** (never a float) that the operating system uses to **keep track of an open file** within a running process. Instead of referring to files by their full name or path internally, the OS just assigns them a number — and uses that number to manage things like reading, writing, or closing that file.
+
+---
+
+### 🔧 Getting a File Descriptor in Node.js
+
+```js
+import fs from "node:fs";
+
+const fd = fs.openSync("learn.txt");
+console.log(fd); // e.g. 3
+```
+
+### 🤔 Why Does the First File You Open Get `fd = 3`, Not `0`?
+
+This is because of something we've already learned: **every process automatically gets 3 built-in streams from the OS** the moment it starts — `stdin`, `stdout`, and `stderr`. These already **occupy** file descriptor numbers `0`, `1`, and `2`.
+
+| Stream   | File Descriptor |
+| -------- | --------------- |
+| `stdin`  | `0`             |
+| `stdout` | `1`             |
+| `stderr` | `2`             |
+
+Since numbers `0`, `1`, and `2` are **already reserved** for these standard I/O streams, the **very next available number** — `3` — is what gets assigned to the **first file you open** in your program. If you open a second file after that, it would typically get `4`, then `5`, and so on.
+
+---
+
+### 🆚 Quick Reference
+
+| fd Number     | Assigned To                   |
+| ------------- | ----------------------------- |
+| `0`           | `stdin`                       |
+| `1`           | `stdout`                      |
+| `2`           | `stderr`                      |
+| `3`           | First file you open           |
+| `4`, `5`, ... | Next files you open, in order |
+
+---
+
+### 🎯 Takeaway
+
+A file descriptor is just a simple whole number the OS uses to **keep track of open files** (and streams) for a process. Since every process automatically starts with `stdin` (0), `stdout` (1), and `stderr` (2) already occupying the first three numbers, any file **you** open in your code will start counting from **3** onward.
