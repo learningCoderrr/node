@@ -2659,3 +2659,122 @@ Since numbers `0`, `1`, and `2` are **already reserved** for these standard I/O 
 ### 🎯 Takeaway
 
 A file descriptor is just a simple whole number the OS uses to **keep track of open files** (and streams) for a process. Since every process automatically starts with `stdin` (0), `stdout` (1), and `stderr` (2) already occupying the first three numbers, any file **you** open in your code will start counting from **3** onward.
+
+## 📖 Reading a File Using File Descriptor
+
+Once we have a **file descriptor (fd)** for an opened file, we can use it to actually **read data** from that file using the `read` method.
+
+---
+
+### 🔧 Setting It Up
+
+```js
+import { read, openSync } from "node:fs";
+
+const fd = openSync("text.txt");
+// opens the file and returns its file descriptor (a number)
+
+const customBuffer = Buffer.alloc(100);
+```
+
+---
+
+### 🔹 Reading Without Options
+
+```js
+read(fd, (err, bytesRead, buffer) => {
+  console.log(bytesRead, buffer);
+});
+```
+
+- `err` → if something went wrong during reading, the error will be here.
+- `bytesRead` → tells us **how many bytes were actually read** from the file.
+- `buffer` → the buffer containing the data that was read.
+
+> 💡 When called without extra options, Node uses **default settings** — it typically allocates its own internal buffer and reads from the beginning of the file.
+
+---
+
+### 🔹 Reading With Options
+
+```js
+read(
+  fd,
+  { buffer: customBuffer, length: 10, offset: 5 },
+  (err, bytesRead, buffer) => {
+    process.stdout.write(String(bytesRead));
+    process.stdout.write(buffer.toString());
+  },
+);
+```
+
+Here, we pass an **options object** as the second argument, letting us control exactly how the read happens:
+
+| Option   | What it means                                                                                                                                                                                            |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buffer` | The buffer **we provide** to store the read data into — here, our `customBuffer`                                                                                                                         |
+| `length` | How many bytes to read from the file **at most** — here, `10` bytes                                                                                                                                      |
+| `offset` | **Where in our buffer** to start placing the read data — here, starting at position `5` (so the first 5 bytes of `customBuffer` stay untouched, and the read data starts filling in from index 5 onward) |
+
+---
+
+### 🆚 Quick Reference: Reading
+
+| Parameter                           | Purpose                                                                                                    |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `fd`                                | The file descriptor of the already-opened file                                                             |
+| `buffer` (option)                   | Where the read data gets stored                                                                            |
+| `length` (option)                   | Max number of bytes to read                                                                                |
+| `offset` (option)                   | Position in the buffer to start writing the read data                                                      |
+| Callback `(err, bytesRead, buffer)` | Runs once reading is complete — gives us any error, how many bytes were read, and the buffer with the data |
+
+---
+
+## ✍️ Writing to a File Using File Descriptor
+
+Just like reading, we can also **write data** to a file using its file descriptor — with the `write` method.
+
+```js
+import fs from "node:fs";
+
+const fd = fs.openSync("text.txt", "w");
+// in second argument `w` is important because it tells the os to open the file for writing by  default it's read only
+fs.write(fd, "data", (err, bytesWritten, dataWritten) => {
+  console.log(bytesWritten, dataWritten);
+});
+```
+
+**Breaking this down:**
+
+- `fd` → the file descriptor of the already-opened file we want to write into.
+- `"data"` → the actual string (or buffer) we want to write to the file.
+- Callback `(err, bytesWritten, dataWritten)`:
+  - `err` → if something went wrong during writing, the error shows up here.
+  - `bytesWritten` → tells us **how many bytes were actually written** to the file.
+  - `dataWritten` → the actual data that was written (echoes back what was passed in).
+
+> 💡 **Note:** Just like `.write()` on a Write Stream, this uses the given file descriptor to write directly at the file's current position — it doesn't automatically manage opening/closing the file for you; that's handled separately via `openSync`/`closeSync`.
+
+---
+
+### 🆚 Quick Reference: Writing
+
+| Parameter                                   | Purpose                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `fd`                                        | The file descriptor of the already-opened file                                                        |
+| Data argument (`"data"`)                    | The string/buffer content to write into the file                                                      |
+| Callback `(err, bytesWritten, dataWritten)` | Runs once writing is complete — gives us any error, how many bytes were written, and the data written |
+
+---
+
+### 🎯 Takeaway
+
+Both `read()` and `write()` let us work with files at a **low level**, directly through their file descriptor — giving us precise control over exactly how much data to read/write, and where. This is more manual than using Readable/Writable Streams, but it's useful when you need fine-grained control, like reading or writing only a specific chunk of a file rather than the whole thing at once.
+
+## closing file
+
+In last we close the file if we opened it.Close using `close` method
+
+```js
+fs.close(fd);
+```
