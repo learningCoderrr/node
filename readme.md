@@ -2894,3 +2894,70 @@ await fileHandle.close();
 ### 🎯 Takeaway
 
 `fs/promises` gives us a cleaner, `async/await`-based way to open, read, write, and close files — avoiding deeply nested callbacks. The one tricky part to remember: since read and write share the **same internal position cursor** on a file handle, reading right after writing (without specifying a position) may return nothing useful — you need to explicitly tell `read()` **where** in the file to start reading from.
+
+## 🌊 Creating Read/Write Streams Using the Promise-Based `fs/promises`
+
+We've already seen how `open()` from `fs/promises` gives us a **`FileHandle`** object. What's useful is that this same `FileHandle` object also lets us create **Readable** and **Writable Streams** directly from it — meaning we can read or write the file in **chunks**, instead of all at once.
+
+---
+
+### 🔧 Setting Up
+
+```js
+import { open } from "node:fs/promises";
+
+const readFileHandle = await open("C:/user/find3/.ssh/github");
+const writeFileHandle = await open("streams.txt", "w");
+```
+
+- `readFileHandle` → a `FileHandle` for the file we want to **read from**.
+- `writeFileHandle` → a `FileHandle` for the file we want to **write to** (opened with `"w"` — write mode, creating the file if it doesn't exist).
+
+---
+
+### 🔧 Creating the Streams
+
+```js
+const readStream = readFileHandle.createReadStream({
+  highWaterMark: 2 * 1024, // reads in 2 KiB chunks
+});
+
+const writeStream = writeFileHandle.createWriteStream({
+  highWaterMark: 3 * 1024, // buffers up to 3 KiB before backpressure kicks in
+});
+```
+
+- `createReadStream()` → turns the `FileHandle` into a **Readable Stream**, letting us consume the file's data chunk-by-chunk.
+- `createWriteStream()` → turns the `FileHandle` into a **Writable Stream**, letting us write data into the file chunk-by-chunk.
+- `highWaterMark` works exactly the same way here as it did with the regular `fs.createReadStream`/`fs.createWriteStream` we covered earlier — it sets the chunk size (for reading) or the memory threshold before backpressure (for writing).
+
+---
+
+### 🔗 Connecting Them Together
+
+```js
+readStream.pipe(writeStream);
+```
+
+Just like before, we have **two options** for moving data from the Read Stream to the Write Stream:
+
+1. **Manually manage everything ourselves** — handling backpressure (`.write()` returning `false`), pausing/resuming, and calling `.end()` on the Write Stream when done.
+2. **Use `.pipe()`** (or Node's `pipeline()` utility) — which automatically handles backpressure, pausing/resuming, and even properly closes/ends the Writable Stream once the Readable Stream finishes — all without us writing that logic manually.
+
+> 💡 **Note:** As mentioned in the Pipe & Unpipe section earlier, don't forget to attach `"error"` listeners on both streams — since an unhandled stream error can crash the whole application, even when using `.pipe()`.
+
+---
+
+### 🆚 Quick Reference
+
+| Method                                  | What it does                                                                |
+| --------------------------------------- | --------------------------------------------------------------------------- |
+| `fileHandle.createReadStream(options)`  | Creates a Readable Stream from an already-open file handle                  |
+| `fileHandle.createWriteStream(options)` | Creates a Writable Stream from an already-open file handle                  |
+| `readStream.pipe(writeStream)`          | Connects the two, automatically managing backpressure and stream completion |
+
+---
+
+### 🎯 Takeaway
+
+The Promise-based `fs/promises` module isn't limited to just one-off `read()`/`write()` calls — its `FileHandle` object can also produce full Readable and Writable **Streams**, giving us the best of both worlds: the cleaner `async/await` style for opening files, combined with the memory-efficient, chunk-based approach of Streams for actually moving large amounts of data.
