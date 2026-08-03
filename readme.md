@@ -2744,7 +2744,16 @@ fs.write(fd, "data", (err, bytesWritten, dataWritten) => {
 });
 ```
 
-**Breaking this down:**
+we can pass the permission of the file in second argument
+
+### Permission like
+
+- "w" //write
+- "r" //read
+- "w+" //write and read
+- "r+" //read and write
+
+  **Breaking this down:**
 
 - `fd` → the file descriptor of the already-opened file we want to write into.
 - `"data"` → the actual string (or buffer) we want to write to the file.
@@ -2778,3 +2787,110 @@ In last we close the file if we opened it.Close using `close` method
 ```js
 fs.close(fd);
 ```
+
+## 📂 Open, Close, Read, Write Using `fs/promises`
+
+Instead of using callbacks (like `fs.open`, `fs.read`, `fs.write`), we can use the **Promise-based version** of the file system module — `fs/promises` — which lets us use `async/await` for cleaner, more readable code.
+
+---
+
+### 🔧 Opening a File
+
+```js
+import { open } from "node:fs/promises";
+// This is a completely separate module built specifically for Promise-based file operations.
+
+const fileHandle = await open("filepath.extension", "w+");
+console.log(fileHandle.fd); // the file descriptor, stored inside the returned object
+```
+
+- `open(path, flag)` returns a special object called a **`FileHandle`** — think of it as a "handle" (a reference) that represents the currently open file. All future read/write/close operations are done **through this handle**.
+- The **flag** `"w+"` means: open the file for **both reading and writing**; create it if it doesn't exist.
+- `fileHandle.fd` gives you the underlying **file descriptor number**, same concept as before.
+
+---
+
+### 🔧 Setting Up Buffers
+
+```js
+const rBuff = Buffer.allocUnsafe(1000); // buffer to hold data we READ
+const wBuff = Buffer.allocUnsafe(400); // buffer to hold data we WRITE
+```
+
+> 💡 Remember: `allocUnsafe` creates the buffer fast but may contain old/stale data — since we're about to fill it with actual read/write data anyway, that's generally fine here.
+
+---
+
+### ✍️ Writing to the File
+
+```js
+await fileHandle.write(wBuff);
+// writes the contents of wBuff into the file
+// returns an object containing: how many bytes were written, and the buffer that was written
+```
+
+### 📖 Reading From the File
+
+```js
+await fileHandle.read(rBuff);
+// reads data from the file INTO rBuff
+// returns an object containing: how many bytes were read, and the buffer with that data
+```
+
+> 💡 If there's no more data left to read (e.g., you're at the end of the file), this will return **0 bytes read**, and `rBuff` will remain empty/unchanged for those unread portions.
+
+---
+
+### 🔄 The Position Problem — Reading After Writing
+
+Here's an important detail: when using the **same `fileHandle`** for both reading and writing, the file keeps track of an internal **"current position"** — like a cursor. Every time you `write()` or `read()`, that cursor **moves forward** based on how much data was processed.
+
+So if you `write()` first, the cursor ends up at the **end** of what was just written. If you then try to `read()` **without specifying a position**, it'll try to read starting from **where the cursor currently is** (the end) — meaning there's nothing left to read, since you're past all the existing data.
+
+**Solution:** explicitly tell `read()` **where to start reading from**, instead of relying on the current cursor position.
+
+```js
+await fileHandle.read(rBuff, 0, rBuff.length, 10);
+// reads starting from byte position 10 in the file
+```
+
+The full signature looks like this:
+
+```js
+fileHandle.read(buffer, offset, length, position);
+```
+
+| Parameter  | Meaning                                                                                   |
+| ---------- | ----------------------------------------------------------------------------------------- |
+| `buffer`   | The buffer to store the read data into                                                    |
+| `offset`   | Where in the **buffer** to start placing the data                                         |
+| `length`   | How many bytes to read                                                                    |
+| `position` | Where in the **file** to start reading from (this is the key fix for our cursor problem!) |
+
+---
+
+### 🔒 Closing the File
+
+```js
+await fileHandle.close();
+// closes the file, releasing the file descriptor and any resources tied to it
+```
+
+> ⚠️ **Important:** Always remember to call `.close()` once you're done. Forgetting to close a file handle can lead to resource leaks — the file descriptor stays "occupied" even though you no longer need it.
+
+---
+
+### 🆚 Quick Reference
+
+| Method                                              | Purpose                                                                     |
+| --------------------------------------------------- | --------------------------------------------------------------------------- |
+| `open(path, flag)`                                  | Opens a file, returns a `FileHandle`                                        |
+| `fileHandle.write(data)`                            | Writes data (string or buffer) to the file                                  |
+| `fileHandle.read(buffer, offset, length, position)` | Reads data from the file into a buffer, optionally from a specific position |
+| `fileHandle.close()`                                | Closes the file, releasing its resources                                    |
+
+---
+
+### 🎯 Takeaway
+
+`fs/promises` gives us a cleaner, `async/await`-based way to open, read, write, and close files — avoiding deeply nested callbacks. The one tricky part to remember: since read and write share the **same internal position cursor** on a file handle, reading right after writing (without specifying a position) may return nothing useful — you need to explicitly tell `read()` **where** in the file to start reading from.
