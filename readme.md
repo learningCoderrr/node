@@ -117,7 +117,7 @@ console.log(process.env);
 ### To install `WSL` cmd is
 
 ```bash
-install --wsl
+ wsl --install
 ```
 
 - we can control this operating system by the help of terminal it's own shell (bash) only .Totally `CLI` based operating system.It can be seems like how the linux is installed in server and operating it.
