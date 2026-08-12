@@ -2961,3 +2961,13 @@ Just like before, we have **two options** for moving data from the Read Stream t
 ### 🎯 Takeaway
 
 The Promise-based `fs/promises` module isn't limited to just one-off `read()`/`write()` calls — its `FileHandle` object can also produce full Readable and Writable **Streams**, giving us the best of both worlds: the cleaner `async/await` style for opening files, combined with the memory-efficient, chunk-based approach of Streams for actually moving large amounts of data.
+
+## Computer NetWorking
+
+### What is Computer NetWorking
+
+Net meaning connection between two 2 or more nodes and working means the data should be transferred from one place to another.
+
+A computer network form when the device is connected through 2 or more devices.When device is connected then data can be transferred from any device with the help of wire or wireless .
+
+In computer networking we learn about protocols which means how the device connect with each other with the help of protocols meaning set of rules to connect or transfer the data in other device
