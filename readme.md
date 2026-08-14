@@ -3139,4 +3139,100 @@ Together, **HTML + CSS + JavaScript** became — and remain — the three core b
 | 1994      | CSS proposed                                                                 |
 | 1995      | JavaScript created                                                           |
 
-a
+## 🖥️ Networking Devices
+
+> 📝 **Note:** Fixed the terminology mix-ups, added the OSI layer each device operates at (this is commonly asked in exams), and corrected a few outdated claims — same H2/H3 structure as your draft.
+
+### 🌐 Node
+
+A **node** is any device connected to a network that can send, receive, or forward data — meaning it actively participates in the network. This is a **broad/umbrella term** and includes end-user devices _and_ networking hardware like routers, switches, and hubs.
+
+### 💻 Host
+
+A **host** is a specific _type_ of node — an **end device** that originates or receives data for actual use (not just forwarding it), has its own unique **IP address**, and runs applications. Examples: a laptop, a smartphone, a server.
+
+> ⚠️ **Clarification:** Since every host is also a node (it sends/receives/participates in the network), **Host is a subset of Node** — this part of your original note was correct. The distinction is: **all hosts are nodes, but not all nodes are hosts** (a switch, for example, is a node but not a host, because it doesn't originate/consume the actual data — it just forwards it).
+
+| Term | Includes                                   | Has its own IP? | Example                     |
+| ---- | ------------------------------------------ | --------------- | --------------------------- |
+| Node | Any connected device (broadest term)       | Not always      | Router, switch, printer, PC |
+| Host | End devices that send/receive data for use | Yes             | Laptop, phone, server       |
+
+### 🔌 HUB
+
+A **Hub** is a **Layer 1 (Physical Layer)** device that connects multiple computers using cables (e.g., **RJ45**). Its major limitation: it has no intelligence — it **broadcasts** every incoming signal to **all connected ports**, instead of sending it to the intended recipient.
+
+- Devices whose address doesn't match the data simply **discard it**.
+- Only the intended device processes and accepts the data.
+- Because it can't distinguish between devices, a hub is often called a **"dumb" device**.
+- Hubs also cause a lot of **collisions** (multiple devices trying to talk at once on the same shared channel), since all ports share a single collision domain.
+
+Hubs are essentially obsolete today, almost entirely replaced by **switches**.
+
+### 🔀 Switch
+
+A **Switch** is an upgrade over the hub, operating mainly at **Layer 2 (Data Link Layer)**. Instead of broadcasting to everyone, it learns and maintains a table of **MAC addresses** of connected devices, and forwards data **only to the specific port** the destination device is connected to.
+
+Benefits over a hub:
+
+- Reduces unnecessary network traffic.
+- Each port effectively gets its own collision domain, improving overall speed and efficiency.
+- More secure, since data isn't exposed to every device on the network.
+
+### ☎️ Modem
+
+**Modem** = **Mo**dulator + **Dem**odulator. It converts **digital signals** (from your computer) into **analog signals** (to transmit over telephone/cable lines) and vice versa on the receiving end.
+
+> ⚠️ Modems are **still very much in use today** — just not usually over plain old telephone lines anymore. Modern **cable modems** and **DSL modems** are standard equipment for many home internet connections, converting the analog signal on the cable/telephone line to digital data for your router/computer.
+
+### 🔦 ONT (Optical Network Terminal)
+
+An **ONT** converts the **optical (light-based) signal** carried over fiber-optic cable into a **digital electrical signal** that regular devices can use — typically handed off to other devices over an **Ethernet (RJ45) cable**. This is the standard entry-point device for **Fiber-To-The-Home (FTTH)** connections.
+
+### 📡 Router
+
+A **Router** operates mainly at **Layer 3 (Network Layer)** and is responsible for directing data packets between different networks, based on **IP addresses** (not MAC addresses like a switch). A modern home router typically does the job of several devices combined:
+
+- Routing traffic between your local network and the internet (its core job).
+- Switching (connecting multiple wired devices).
+- Wireless access point (connecting devices over Wi-Fi).
+
+It has its own **CPU, memory, and storage** to run its operating system/firmware. Many modern routers also come with a **built-in ONT**, removing the need for a separate ONT box — the fiber cable can plug directly into the router.
+
+A router also handles **signal conversion** to enable wireless transmission:
+
+- It converts a **digital signal** into a **wireless (radio) signal** to broadcast Wi-Fi to connected devices.
+- If it has a built-in ONT, it can also convert the **optical signal** (light, carried over fiber) directly into a **wireless signal** — going straight from fiber to Wi-Fi without a separate conversion step.
+
+### 🌉 Bridge
+
+A **Bridge** operates at **Layer 2** and connects **two LAN segments together**, forwarding traffic based on MAC addresses — essentially making two separate LANs function as one larger network.
+
+> ⚠️ A bridge does **not** create a **MAN (Metropolitan Area Network)**. A MAN is a much larger-scale network spanning a city, typically built by ISPs/enterprises connecting many LANs together using routers and dedicated MAN infrastructure (fiber backbones, etc.) — not a simple bridge. A bridge's job is much smaller in scope: merging two nearby LAN segments.
+
+Bridges are rarely used standalone today, since modern switches and routers can perform the same segment-joining function.
+
+### 📶 Repeater
+
+A **Repeater** extends the range of a wireless network by **receiving, amplifying, and re-broadcasting** the signal. It connects to the router wirelessly and rebroadcasts on the same or an adjacent channel.
+
+**Downside:** Since it _receives_ and _re-transmits_ wirelessly using the same radio, it effectively has to split its airtime between listening and talking — usually resulting in **roughly half the original bandwidth** for devices connected through it, compared to connecting directly to the router.
+
+### 📡 Access Point
+
+An **Access Point (AP)** also extends wireless coverage, but connects to the main router/switch via a **wired Ethernet (RJ45) cable** rather than wirelessly. It converts the wired digital signal into a wireless (Wi-Fi) signal for nearby devices.
+
+Because the backhaul (connection back to the router) is wired instead of wireless, an access point delivers **much better speed and reliability** than a repeater — wired connections generally have more stable bandwidth than wireless ones.
+
+### 📊 Quick Comparison
+
+| Device       | OSI Layer           | Forwards Based On       | Main Use                                 |
+| ------------ | ------------------- | ----------------------- | ---------------------------------------- |
+| Hub          | Layer 1 (Physical)  | Broadcasts to all       | Legacy — obsolete                        |
+| Switch       | Layer 2 (Data Link) | MAC address             | Connect devices within a LAN             |
+| Bridge       | Layer 2 (Data Link) | MAC address             | Join two LAN segments                    |
+| Router       | Layer 3 (Network)   | IP address              | Connect different networks / to internet |
+| Modem        | Physical            | N/A (signal conversion) | Digital ⇄ Analog conversion              |
+| ONT          | Physical            | N/A (signal conversion) | Optical ⇄ Digital conversion             |
+| Repeater     | Physical            | N/A (signal boost)      | Extend Wi-Fi range (wireless backhaul)   |
+| Access Point | Layer 2             | MAC address             | Extend Wi-Fi range (wired backhaul)      |
