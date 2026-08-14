@@ -3236,3 +3236,46 @@ Because the backhaul (connection back to the router) is wired instead of wireles
 | ONT          | Physical            | N/A (signal conversion) | Optical ⇄ Digital conversion             |
 | Repeater     | Physical            | N/A (signal boost)      | Extend Wi-Fi range (wireless backhaul)   |
 | Access Point | Layer 2             | MAC address             | Extend Wi-Fi range (wired backhaul)      |
+
+## 🌐 Types of Network
+
+> 📝 **Note:** Corrected the definitions and spellings, and added the actual scale/range and examples for each — this is a common exam topic so I've made it precise.
+
+### 👤 PAN — Personal Area Network
+
+A **PAN** is a network built around a **single person's own devices**, covering a **very short range** (usually within about 10 meters). It's not limited to just two devices connected "peer to peer" — it can include several personal devices at once.
+
+> ⚠️ PAN isn't specifically about "two computers." It's about **connecting your own personal devices together**, over a very short distance.
+
+**Examples:** Connecting your phone to wireless earbuds via Bluetooth, connecting a phone to a laptop via USB, a smartwatch synced with your phone.
+
+### 🏠 LAN — Local Area Network
+
+A **LAN** connects two or more devices within a **small, limited physical area** — like a single home, office, school, or building.
+
+**Examples:** All the computers and printers connected to Wi-Fi in one office; a home network connecting your laptop, phone, and smart TV.
+
+### 🏙️ MAN — Metropolitan Area Network
+
+A **MAN** connects multiple **LANs together across a larger area — typically a whole city or metropolitan region**. It's bigger than a LAN but smaller than a WAN.
+
+> ⚠️ Also, a MAN isn't just "too many LANs connected" randomly — it specifically refers to networking infrastructure spanning a **city-wide** area, usually built and maintained by an ISP or a city/government body.
+
+**Examples:** A cable TV network across a city; a network connecting all branches of a university across a city; a metropolitan ISP backbone.
+
+### 🌍 WAN — Wide Area Network
+
+A **WAN** connects networks across **large geographical distances** — spanning cities, countries, or even continents.
+
+> ⚠️ A WAN isn't specifically "nations connected together" — it just means the network spans a **very large geographic area**, larger than a single city. It can connect offices of the same company across different cities/countries, or connect entire countries together.
+
+**Examples:** The **Internet** itself is the largest and most well-known WAN; a company's network connecting its branch offices in different countries.
+
+### 📊 Quick Comparison
+
+| Type | Full Form                 | Coverage Area                    | Typical Example           |
+| ---- | ------------------------- | -------------------------------- | ------------------------- |
+| PAN  | Personal Area Network     | A few meters (around one person) | Phone ⇄ Bluetooth earbuds |
+| LAN  | Local Area Network        | One building/home/office         | Office Wi-Fi network      |
+| MAN  | Metropolitan Area Network | A city/metro region              | City-wide ISP network     |
+| WAN  | Wide Area Network         | Country/continent/global         | The Internet              |
