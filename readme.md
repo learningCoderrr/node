@@ -3279,3 +3279,90 @@ A **WAN** connects networks across **large geographical distances** — spanning
 | LAN  | Local Area Network        | One building/home/office         | Office Wi-Fi network      |
 | MAN  | Metropolitan Area Network | A city/metro region              | City-wide ISP network     |
 | WAN  | Wide Area Network         | Country/continent/global         | The Internet              |
+
+## 🌐 Some Info About Router (or Any Routing Device)
+
+Whenever we connect one device to another, we use either a **wired** or **wireless** connection so they can communicate.
+
+In the case of Wi-Fi, we use a **router** to connect multiple devices together (and to the internet).
+
+Every router runs its own **DHCP (Dynamic Host Configuration Protocol)** service, which automatically **assigns an IP address** to each device that connects to it — you don't have to set it manually.
+
+> 📝 **Note:** It's not exactly a _random_ IP — DHCP assigns the **next available IP address** from a defined range/pool that the router is configured to use, not a fully random number.
+
+A router actually deals with **two different IP addresses**:
+
+| IP type    | What it identifies                                                                                | Assigned by                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **LAN IP** | The router's address _inside_ your local network (and the addresses it hands out to your devices) | The router's own DHCP service                                           |
+| **WAN IP** | The router's address as seen from the _internet_ (outside world)                                  | Your ISP (Internet Service Provider), assigned to the router's WAN port |
+
+So devices _inside_ your home talk to the router using its **LAN IP**, while the _internet_ talks to your router using its **WAN IP**.
+
+> 💡 To view your router's LAN IP, check the **gateway IP** on your device's network settings — the "default gateway" _is_ your router's LAN IP, since the router itself is basically a small computer with its own IP address.
+
+## 🔢 IPv4 Address
+
+An **IPv4 address** is **not a protocol** — it's an **address**, used to identify a device on a network so data can be sent to the correct destination.
+
+> **IP = Internet Protocol** (Address)
+
+An IPv4 address is made of **32 bits** (binary digits), split into **4 groups (octets)**, where each group is **1 byte (8 bits)**.
+
+**Example:**
+
+```
+Decimal:  192.100.10.1
+Binary:   11000000.01100100.00001010.00000001
+Combined: 11000000011001000000101000000001   (32 bits total)
+```
+
+Each group (byte) can hold a maximum decimal value of **255**, because the largest 8-bit binary number is `11111111`:
+
+```
+255.255.255.255
+```
+
+Each byte can represent **256 different values** — from `0` to `255` (0 counts as a value too, so it's `0–255` = 256 total possibilities).
+
+### 🔁 Loopback Address (Localhost)
+
+A special block of IP addresses is reserved to always refer to **the current device itself** — this is called the **loopback address**:
+
+```
+127.0.0.1  →  127.255.255.255
+```
+
+> ⚠️ This entire block (over 16 million addresses) is reserved just for loopback, even though in practice almost everyone only ever uses `127.0.0.1`. Reserving such a huge block for a single purpose is a good example of the kind of **address wastage** that made IPv4's limited 32-bit space (only ~4.3 billion total addresses) run out faster than expected. This is one of the major reasons **IPv6** was designed — it uses **128-bit** addresses, giving a vastly larger address space so we don't need to worry about running out or being this conservative with reserved blocks.
+
+## 🎭 Subnet Mask
+
+A **subnet mask** works _alongside_ an IP address — think of it as a **template/indicator** that tells you which part of the IP address is **fixed (the network)** and which part is allowed to **change (the individual devices/hosts)**.
+
+Like an IPv4 address, a subnet mask is also **32 bits (4 bytes)** long.
+
+> 📝 **Note:** Traditionally, subnet masks are written so each byte is either fully `1`s (`255`) or fully `0`s (`0`) — but technically a subnet mask can split _within_ a byte too (this is where **CIDR notation**, like `/24` or `/16`, comes in — the number after the slash tells you exactly how many bits, not just bytes, are network bits). For simplicity, we'll stick to full-byte examples here since that's the easiest to understand first.
+
+**Meaning of the bits:**
+
+- `1` = **Network ID** portion → this part must stay the **same** for every device in the network.
+- `0` = **Host** portion → this part is what **varies** between devices in the same network.
+
+**Example:**
+
+```
+Subnet mask:  255.255.0.0
+Binary:       11111111.11111111.00000000.00000000
+```
+
+This means the **first 2 groups (octets)** of the IP address are the fixed **network ID**, and the **last 2 groups** are free to change for each device (**host ID**):
+
+| Device   | IP Address   | Network part (fixed) | Host part (varies) |
+| -------- | ------------ | -------------------- | ------------------ |
+| Device 1 | `10.12.10.2` | `10.12`              | `10.2`             |
+| Device 2 | `10.12.13.5` | `10.12`              | `13.5`             |
+| Device 3 | `10.12.11.2` | `10.12`              | `11.2`             |
+
+All three devices belong to the **same network** (`10.12.x.x`) because their network portion matches — only their host portion differs.
+
+> 💡 In short: the subnet mask tells your device _how much_ of the IP address to treat as the "neighborhood" (network) and how much is the individual "house number" (host) within that neighborhood.
