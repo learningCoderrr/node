@@ -3366,3 +3366,43 @@ This means the **first 2 groups (octets)** of the IP address are the fixed **net
 All three devices belong to the **same network** (`10.12.x.x`) because their network portion matches — only their host portion differs.
 
 > 💡 In short: the subnet mask tells your device _how much_ of the IP address to treat as the "neighborhood" (network) and how much is the individual "house number" (host) within that neighborhood.
+
+## 🔄 Dynamic and Static IP Address
+
+### ⚡ Dynamic IP Address
+
+A **dynamic IP address** is assigned automatically by a **DHCP server** (usually your router) to any device that connects to the network. The DHCP server picks an available IP address from its configured range/pool and assigns it — automatically avoiding conflicts, since it keeps track of which addresses are already in use.
+
+**Key traits:**
+
+- Assigned automatically — no manual setup needed.
+- Can **change over time** (e.g., after the device reconnects, or after the DHCP "lease" — the time period an IP is valid for — expires).
+- Very unlikely to conflict, since the DHCP server tracks which addresses are already given out.
+
+**Used for:** Most everyday **private devices** — laptops, phones, smart TVs — since they only need to work inside your own local network and don't need to stay fixed for the outside world to find them.
+
+### 📌 Static IP Address
+
+A **static IP address** is **manually configured** on a device instead of being assigned by DHCP. This might be done when:
+
+- The DHCP server is turned off, or
+- You specifically need the device to always keep the **same IP address** (for example, a printer, a home server, or a security camera that other devices need to reliably find at a fixed address).
+
+> ⚠️Static IPs don't inherently conflict _more_ than dynamic ones — the risk only comes from **human error**: since you're typing the address in by hand, you could accidentally pick one that's already in use by another device. This is called an **IP address conflict**, and it usually causes both devices to lose network connectivity until it's fixed.
+
+**Important safeguard:** A properly configured DHCP server **will not** assign an IP address that has already been manually (statically) reserved or is already active on the network — it checks before handing out addresses, which helps avoid conflicts from the DHCP side.
+
+A **static IP** is generally used when a device needs to be **publicly reachable from anywhere on the internet**, like a website's server — since it needs to be found at the **same address every time**, a dynamic (changing) IP would break things, as DNS records pointing to it would go stale.
+
+**Example:** When you visit `google.com`, your device doesn't need to "search" for it randomly — the domain name reliably resolves to Google's server IP address, letting you connect to the same service every time you visit.
+
+> ⚠️ It's not a strict _rule_ that public-facing servers are always static — it's more of a **common practice**, since a dynamic IP would keep changing and break the domain's DNS records. Large services like Google actually use extra techniques on top of this — like **load balancing** and **multiple servers behind the same domain** — so what looks like "one unchanging IP" from the outside is often a whole fleet of servers behind the scenes. But the core idea holds: **a publicly reachable service needs a stable, predictable address, so static IPs (or IPs that behave like static ones) are the standard choice** for that use case.
+
+### 📊 Quick Comparison
+
+| Feature            | Dynamic IP                         | Static IP                                                    |
+| ------------------ | ---------------------------------- | ------------------------------------------------------------ |
+| Assigned by        | DHCP server (automatic)            | Manually by the user                                         |
+| Changes over time? | Yes, can change                    | No, stays fixed                                              |
+| Conflict risk      | Very low (DHCP tracks usage)       | Higher, if set incorrectly by hand                           |
+| Best for           | Everyday devices (phones, laptops) | Devices needing a fixed address (servers, printers, cameras) |
