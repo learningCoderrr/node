@@ -3500,3 +3500,97 @@ Private IPs are used only for communication **within** the local network — to 
 - **Public IPs must always be globally unique** — no two devices on the internet can have the same public IP at the same time, since that address has to be resolvable from anywhere in the world.
 
 > ⚠️ The reason private IPs can be reused safely isn't because "they change frequently" — it's because they're **confined to their own local network** and never travel across the public internet. Similarly, public IPs aren't unique because they "don't change" — dynamic public IPs _do_ change sometimes, but at any given moment, no two devices anywhere on the internet can hold the same public IP simultaneously.
+
+## 🌐 Info About IPv6
+
+An **IPv6 address** is much bigger than IPv4 — it holds **128 bits** total, split into **8 groups**, where each group is **16 bits** (written as 4 hexadecimal digits).
+
+> ⚠️ "8×2 binary in a group" was a bit unclear — to be precise: **8 groups × 16 bits each = 128 bits total**. Each group is shown as **4 hex digits** (since 1 hex digit = 4 bits, and 4 × 4 = 16 bits).
+
+### ✂️ The Way IPv6 Is Written (Shortening Rules)
+
+**Rule 1 — Drop leading zeros within each group:**
+
+```
+Full:      2409:40e4:1223:774c:00bc:dbc3:003b:27fd
+Shortened: 2409:40e4:1223:774c:bc:dbc3:3b:27fd
+```
+
+The leading `00` in `00bc` and `003b` is dropped — you keep only the meaningful digits of each group.
+
+**Rule 2 — Replace one run of consecutive all-zero groups with `::`:**
+
+```
+Full:      2409:40e4:1223:774c:0000:0000:003b:27fd
+Shortened: 2409:40e4:1223:774c::3b:27fd
+```
+
+**Rule 3 — `::` can only be used ONCE in an address:**
+
+If there are **two separate** runs of zero-groups in the same address, only the **longest** run gets replaced by `::` — any other lone zero group is written as a plain `0`, not compressed further. This is because using `::` more than once would make it impossible to know exactly how many zero-groups belong in each gap.
+
+```
+Full:      2409:0000:0000:774c:0000:003b:0000:27fd
+Shortened: 2409::774c:0:3b:0:27fd
+```
+
+Here, the first run (`0000:0000`) is the longest, so it becomes `::`. The two other lone `0000` groups later in the address are simply written as `0` each, not compressed.
+
+### 🔁 Loopback Address
+
+IPv6 has only **one loopback address**:
+
+```
+Full:      0000:0000:0000:0000:0000:0000:0000:0001
+Shortened: ::1
+```
+
+### 🏷️ The 3 Types of IPv6 Addresses a Device Can Have
+
+A router (or the device's own auto-configuration) can assign a device **three different kinds** of IPv6 addresses, each for a different purpose:
+
+#### 1️⃣ Global Unicast Address (the "main" address)
+
+```
+2409:40e4:1223:774c:5a96:98f9:54a0:7d7a
+```
+
+This is the device's stable, **globally routable public address** — this is the one you'd use to run a server that needs to be reachable from anywhere on the internet.
+
+#### 2️⃣ Temporary Address (Privacy Address)
+
+```
+2409:40e4:1223:774c:bc32:dbc3:143b:27fd
+```
+
+This address is used as the **source address when your device initiates outgoing connections** (like browsing a website) — not for running a server. It changes periodically (typically every so often, like once a day) specifically to make it **harder for outside websites/servers to track your device** over time using a fixed, unchanging address. This is officially called a **Temporary/Privacy Address** (defined in RFC 4941).
+
+#### 3️⃣ Link-Local Address
+
+```
+fe80::575c:c96e:8406:fc43%5
+```
+
+This address only works for communication with **other devices on the same local network segment (the same "link")** — it's never sent out to the wider internet.
+
+> 📝 **Note:** It's similar to loopback in that it's confined and not internet-routable, but it's **not the same thing** — loopback (`::1`) only ever refers back to your _own_ device, while a link-local address lets your device talk to _other devices on the same local link_ (useful for things like local device discovery), not just itself.
+
+> 💡 The `%5` at the end is called the **zone ID (or scope ID)** — since link-local addresses aren't globally unique, this tells the operating system exactly _which network interface_ (e.g., Wi-Fi vs Ethernet) the address applies to.
+
+### 🔌 Compatibility
+
+If a system only supports **IPv6** and the other system it's trying to reach only supports **IPv4** (or vice versa), they generally **cannot connect directly** — the two protocols aren't compatible on their own. (In practice, techniques like **dual-stack** setups, or translation mechanisms like **NAT64/DNS64**, are used to bridge this gap where needed.)
+
+### 🌐 Accessing a Server via IPv6
+
+Since IPv6 addresses already use colons (`:`) — the same character normally used to separate an address from a port number — you must wrap the address in **square brackets** to avoid ambiguity:
+
+```
+[ipv6-address]:portNumber
+```
+
+**Example:**
+
+```
+[2409:40e4:1223:774c:5a96:98f9:54a0:7d7a]:8080
+```
