@@ -3594,3 +3594,38 @@ Since IPv6 addresses already use colons (`:`) — the same character normally us
 ```
 [2409:40e4:1223:774c:5a96:98f9:54a0:7d7a]:8080
 ```
+
+## 🔀 Port Forwarding
+
+**Port forwarding** becomes necessary when you have **multiple servers** running on **different devices** inside the same local network, but only **one public IP address** (on the router) facing the internet.
+
+Since every device behind the router shares that single public IP (via NAT), the router needs a way to know: _"when a request comes in on a specific port, which internal device/server should it actually go to?"_ That's exactly what port forwarding does — it creates a **rule mapping an incoming port on the router to a specific private IP address (and port) on the local network**.
+
+**Example:**
+
+| Incoming request to router | Forwarded to (internal device) |
+| -------------------------- | ------------------------------ |
+| Port `8080`                | `192.168.1.10:80` (Server A)   |
+| Port `2222`                | `192.168.1.15:22` (Server B)   |
+
+Without port forwarding, the router wouldn't know which internal device an incoming request is meant for, since **all internal devices share the same public IP** from the outside world's perspective.
+
+### 🔢 Default Ports (Why You Don't Always Need to Type One)
+
+When you visit a server using just its IP address (or domain), and you don't type a port number, your browser automatically assumes a **default port** based on the protocol:
+
+| Protocol | Default Port |
+| -------- | ------------ |
+| HTTP     | `80`         |
+| HTTPS    | `443`        |
+
+> ⚠️ port `80` (HTTP) — worth also knowing that **HTTPS** (the secure, encrypted version most modern websites use) defaults to port **`443`**, not `80`. So:
+>
+> - `http://192.168.1.10` → automatically means `192.168.1.10:80`
+> - `https://192.168.1.10` → automatically means `192.168.1.10:443`
+
+If a server is running on **any other port** (like `8080`), you **do** need to type it explicitly:
+
+```
+http://192.168.1.10:8080
+```
